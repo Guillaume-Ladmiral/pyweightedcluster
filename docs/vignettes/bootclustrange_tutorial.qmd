@@ -1,0 +1,575 @@
+---
+title: "Bootstrap Validation with bootclustrange"
+subtitle: "Assessing Clustering Solution Stability"
+author: "weightedcluster Python Package"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Introduction
+
+## What is Bootstrap Validation?
+
+Bootstrap validation is a statistical resampling technique used to assess the stability and reliability of clustering solutions. Instead of relying on a single clustering result from your full dataset, bootstrap validation:
+
+1. Creates multiple subsamples from your data (with or without replacement)
+2. Computes clustering solutions on each subsample
+3. Evaluates quality metrics (ASW, CH, etc.) for each bootstrap sample
+4. Analyzes the distribution of these metrics across bootstrap samples
+
+This approach helps you understand:
+
+- **Stability**: How consistent is your clustering solution across different subsets of data?
+- **Reliability**: Can you trust the quality metrics computed on your full dataset?
+- **Optimal K**: Which number of clusters produces the most stable and reliable results?
+
+## Why Use bootclustrange?
+
+The `bootclustrange()` function in weightedcluster extends standard clustering range analysis by adding bootstrap validation. Key benefits:
+
+- **Confidence assessment**: Get distributions of quality metrics, not just point estimates
+- **Sampling strategies**: Choose from random, stratified (clustering), or medoid-based sampling
+- **Efficient computation**: Optimized for sequence data with intelligent subsampling
+- **Visual diagnostics**: Built-in plotting functions for bootstrap distributions
+
+## When to Apply Bootstrap Validation?
+
+Use bootstrap validation when:
+
+- Your dataset is large enough (N > 100 recommended, ideally N > 500)
+- You want to assess clustering stability before making decisions
+- You need to compare multiple clustering methods or parameter settings
+- You're working with noisy or high-dimensional sequence data
+- You want to provide confidence intervals for quality metrics in publications
+
+# Basic Usage
+
+## Simple Example with Sequence Data
+
+Let's start with a basic example using synthetic sequence data:
+
+```{python}
+# docs-audit: sequential id=boot-data-smoke
+import numpy as np
+import weightedcluster as wc
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+# Generate synthetic sequence data (N=100, T=10 time points, 4 states)
+# Two clear groups: state 0→1→2 vs state 3→2→1
+N = 100
+T = 10
+
+# Group 1: Sequences mostly in states 0-1-2
+group1 = np.zeros((N//2, T), dtype=int)
+for i in range(N//2):
+    if i < N//4:
+        group1[i] = [0, 0, 1, 1, 2, 2, 2, 1, 1, 0]  # Pattern A
+    else:
+        group1[i] = [0, 1, 1, 2, 2, 2, 2, 2, 1, 0]  # Pattern B
+
+# Group 2: Sequences mostly in states 3-2-1
+group2 = np.zeros((N//2, T), dtype=int)
+for i in range(N//2):
+    if i < N//4:
+        group2[i] = [3, 3, 2, 2, 1, 1, 1, 2, 2, 3]  # Pattern C
+    else:
+        group2[i] = [3, 2, 2, 1, 1, 1, 1, 1, 2, 3]  # Pattern D
+
+seqdata = np.vstack([group1, group2])
+
+# Add some noise
+noise_idx = np.random.choice(N, size=int(N * 0.1), replace=False)
+for idx in noise_idx:
+    seqdata[idx] = np.random.randint(0, 4, size=T)
+
+print(f"Sequence data shape: {seqdata.shape}")
+print(f"First 3 sequences:\n{seqdata[:3]}")
+```
+
+Now compute the distance matrix and perform clustering with bootstrap validation:
+
+```{python}
+# docs-audit: sequential id=boot-clustrange-smoke
+# Compute Hamming distance matrix
+from weightedcluster._seqdist import sequences_distance
+
+diss = sequences_distance(seqdata, metric="HAM", normalize=True)
+print(f"Distance matrix shape: {diss.shape}")
+
+# Perform clustering for K=2 to 5
+from weightedcluster import wcKMedRange
+
+clustrange = wcKMedRange(diss, kvals=range(2, 6), R=1)
+print(f"Clustering complete for K={clustrange['kvals']}")
+```
+
+Apply bootstrap validation:
+
+```{python}
+# docs-audit: sequential id=boot-base-smoke
+from weightedcluster import bootclustrange
+
+# Bounded executable check used by the ordinary documentation test suite.
+# The full R=100 analysis in the next cell is reserved for the extended
+# Quarto audit.
+boot_result = bootclustrange(
+    object=clustrange,
+    seqdata=seqdata,
+    seqdist_args={"method": "HAM"},
+    R=3,
+    sample_size=80,
+    sampling="random",
+    random_state=42,
+)
+print("Bounded bootstrap check complete")
+```
+
+The following is the realistic full analysis used for substantive bootstrap
+interpretation. It is explicitly classified as an extended Quarto workload.
+
+```{python}
+# docs-audit: expensive pair=boot-base-smoke
+from weightedcluster import bootclustrange
+
+# Bootstrap with R=100 resamples, subsample size=80
+boot_result = bootclustrange(
+    object=clustrange,
+    seqdata=seqdata,
+    seqdist_args={"method": "HAM"},
+    R=100,
+    sample_size=80,
+    sampling="random",
+    random_state=42
+)
+
+print("Bootstrap complete!")
+print(f"Available stats: {list(boot_result['boot'][2].keys())}")
+```
+
+`bootclustrange()` always recomputes the baseline and bootstrap distance matrices from `seqdata`. The precomputed `diss` above is used only to build the initial `clustrange` object.
+
+## Interpreting Bootstrap Distributions
+
+Examine the bootstrap distributions for key quality metrics:
+
+```{python}
+# docs-audit: sequential
+import numpy as np
+
+# For each K, show mean and std of ASW across bootstraps
+print("\nBootstrap ASW (Average Silhouette Width) Statistics:")
+print("K\tMean\tStd\tMin\tMax")
+print("-" * 50)
+for k in boot_result['kvals']:
+    asw_samples = boot_result['boot'][k]['ASW']
+    print(f"{k}\t{np.mean(asw_samples):.3f}\t{np.std(asw_samples):.3f}\t"
+          f"{np.min(asw_samples):.3f}\t{np.max(asw_samples):.3f}")
+```
+
+**Interpretation:**
+- **High mean + low std**: Stable solution, reliable metric
+- **Low std**: Clustering is consistent across subsamples
+- **Wide range (max-min)**: Clustering is sensitive to data subset
+
+## Quality Metric Stability Assessment
+
+Compare full-data metrics (`baseline_stats`) with bootstrap confidence intervals:
+
+```{python}
+# docs-audit: sequential
+# Compare full-data vs bootstrap for K=2
+k = 2
+full_data_asw = boot_result.additions['baseline_stats']['ASW'][boot_result['kvals'].index(k)]
+boot_asw = boot_result['boot'][k]['ASW']
+
+print(f"\nK={k} ASW Comparison:")
+print(f"Full data:        {full_data_asw:.4f}")
+print(f"Bootstrap mean:   {np.mean(boot_asw):.4f}")
+print(f"Bootstrap std:    {np.std(boot_asw):.4f}")
+print(f"95% CI:          ({np.percentile(boot_asw, 2.5):.4f}, "
+      f"{np.percentile(boot_asw, 97.5):.4f})")
+
+# Check if full-data value is within bootstrap CI
+in_ci = np.percentile(boot_asw, 2.5) <= full_data_asw <= np.percentile(boot_asw, 97.5)
+print(f"Full-data ASW within 95% CI: {in_ci}")
+```
+
+# Advanced Usage
+
+## Sampling Strategies
+
+This bounded cell exercises both sampling strategies in the ordinary smoke
+gate. The `R=50` cells that follow remain realistic extended examples.
+
+```{python}
+# docs-audit: sequential id=boot-sampling-smoke
+boot_random_smoke = bootclustrange(
+    clustrange,
+    seqdata,
+    seqdist_args={"method": "HAM"},
+    R=3,
+    sample_size=40,
+    sampling="random",
+    random_state=42,
+)
+boot_stratified_smoke = bootclustrange(
+    clustrange,
+    seqdata,
+    seqdist_args={"method": "HAM"},
+    R=3,
+    sample_size=80,
+    sampling="strata",
+    strata=clustrange["clustering"]["cluster2"],
+    random_state=42,
+)
+print("Bounded random and stratified checks complete")
+```
+
+### Random Sampling
+
+Uniform random sampling without regard to cluster structure:
+
+```{python}
+# docs-audit: expensive pair=boot-sampling-smoke
+boot_random = bootclustrange(
+    clustrange,
+    seqdata,
+    seqdist_args={"method": "HAM"},
+    R=50,
+    sample_size=80,
+    sampling="random",  # Uniform sampling
+    random_state=42
+)
+
+print("Random sampling complete")
+```
+
+### Stratified Sampling (Clustering)
+
+Maintains cluster proportions from the highest K solution:
+
+```{python}
+# docs-audit: expensive pair=boot-sampling-smoke
+boot_stratified = bootclustrange(
+    clustrange,
+    seqdata,
+    seqdist_args={"method": "HAM"},
+    R=50,
+    sample_size=80,
+    sampling="strata",
+    strata=clustrange["clustering"]["cluster2"],
+    random_state=42
+)
+
+print("Stratified sampling complete")
+```
+
+### Medoid-Based Sampling
+
+Ensures cluster medoids are always included in subsamples (requires CLARA-like object):
+
+```{python}
+# docs-audit: sequential
+# Note: Medoid sampling requires a clustering result that includes medoids
+# (e.g., from seqclararange or wcKMedRange with medoid tracking)
+# For this demo, we'll show the syntax:
+# boot_medoids = bootclustrange(
+#     clara_result,
+#     seqdata,
+#     seqdist_args={"method": "HAM"},
+#     R=50,
+#     sample_size=80,
+#     sampling="medoids",
+#     random_state=42
+# )
+print("Medoid sampling syntax: sampling='medoids'")
+```
+
+## Subsample Size Selection
+
+### Guidelines for Subsample Size
+
+The `sample_size` parameter controls how many observations are drawn in each bootstrap:
+
+- **Small subsamples (N/4 to N/2)**: Faster computation, higher variance
+- **Medium subsamples (N/2 to 3N/4)**: Balanced speed and stability
+- **Large subsamples (3N/4 to N)**: More stable, slower computation
+
+**Recommended:**
+- For N < 500: Use sample_size = N//2 (half the data)
+- For N 500-2000: Use sample_size = 1000
+- For N > 2000: Use sample_size = 1000-5000
+
+```{python}
+# docs-audit: expensive pair=boot-sampling-smoke
+# Compare different subsample sizes
+subsample_sizes = [50, 70, 90]
+
+for ss in subsample_sizes:
+    boot_temp = bootclustrange(
+        clustrange,
+        seqdata,
+        R=30,  # Fewer bootstraps for speed
+        sample_size=ss,
+        sampling="random",
+        random_state=42
+    )
+    asw_k2 = boot_temp['boot'][2]['ASW']
+    print(f"Subsample={ss}: ASW std={np.std(asw_k2):.4f}")
+```
+
+# Visualization
+
+## Box Plots by K
+
+Visualize bootstrap distributions using box plots:
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import plot_bootclustrange
+import matplotlib.pyplot as plt
+
+# Box plot of ASW across K values
+fig, ax = plot_bootclustrange(
+    boot_result,
+    stat="ASW",
+    kind="box"
+)
+ax.set_title("Bootstrap ASW Distributions by K")
+ax.axhline(y=0, color='red', linestyle='--', alpha=0.5)
+plt.tight_layout()
+fig
+```
+
+## Density Plots
+
+Compare distributions using kernel density estimation:
+
+```{python}
+# docs-audit: sequential
+fig, ax = plot_bootclustrange(
+    boot_result,
+    stat="CH",  # Calinski-Harabasz index
+    kind="density"
+)
+ax.set_title("Bootstrap CH Index Distributions")
+plt.tight_layout()
+fig
+```
+
+## Interpreting Box Plots and Density Plots
+
+**What to look for:**
+1. **Separation between K values**: Clear separation suggests distinct optimal K
+2. **Overlap**: Overlapping distributions mean K values perform similarly
+3. **Outliers**: Extreme values may indicate subsample sensitivity
+4. **Symmetry**: Symmetric distributions suggest stable metrics
+
+# Best Practices
+
+## Recommended R Values
+
+The number of bootstrap resamples (R) affects reliability and computation time:
+
+| Dataset Size | Recommended R | Purpose |
+|--------------|--------------|---------|
+| N < 200 | 50-100 | Quick assessment |
+| N 200-1000 | 100-500 | Standard validation |
+| N > 1000 | 500-1000 | Publication-quality |
+
+**Rule of thumb:** Use R ≥ 100 for reliable confidence intervals.
+
+## Subsample Size Guidelines
+
+| Dataset Size | Recommended sample_size | Reasoning |
+|--------------|------------------------|-----------|
+| N < 500 | N//2 (50%) | Balance stability and diversity |
+| N 500-2000 | 1000 | Fixed size for consistency |
+| N > 2000 | 1000-5000 | Computational efficiency |
+
+## Quality Metric Selection
+
+**Primary metrics for bootstrap validation:**
+
+1. **ASW (Average Silhouette Width)**: Range-normalized, interpretable
+   - Good: ASW > 0.5
+   - Acceptable: ASW > 0.25
+   - Poor: ASW < 0.25
+
+2. **CH (Calinski-Harabasz)**: Higher is better, sensitive to K
+   - Look for local maxima across K values
+   - Compare relative values, not absolute
+
+3. **PBC (Point-Biserial Correlation)**: Measures separation quality
+   - Range: -1 to 1
+   - Higher is better
+
+**Avoid over-interpreting:**
+- Single bootstrap run (use R ≥ 100)
+- Metrics with very high variance
+- Differences smaller than 2× bootstrap std
+
+## Computational Efficiency Tips
+
+```{python}
+# docs-audit: expensive pair=boot-base-smoke
+# 1. Use smaller R for exploratory analysis
+boot_quick = bootclustrange(
+    clustrange,
+    seqdata,
+    R=50,
+    sample_size=70,
+    sampling="random",
+    random_state=42,
+)
+
+# 2. Limit K range to plausible values
+clustrange_limited = wcKMedRange(
+    diss, kvals=range(2, 5), R=1, random_state=42
+)
+
+# 3. Reuse an already-computed clustrange object, but note that bootclustrange
+# still recomputes each bootstrap distance matrix from seqdata.
+
+print("Efficiency tips applied")
+```
+
+## Parallel Execution
+
+For large-scale bootstrap validation (high R values or large datasets), `bootclustrange()` supports parallel execution using multiple CPU cores:
+
+In a standalone `.py` script, run the following parallel calls only from an
+`if __name__ == "__main__":` block. That process-spawn guard prevents worker
+processes from recursively executing the script. Quarto/Jupyter cells may call
+the function directly as shown here.
+
+```{python}
+# docs-audit: expensive pair=boot-base-smoke
+import time
+
+# Serial execution (baseline)
+start = time.time()
+boot_serial = bootclustrange(
+    clustrange,
+    seqdata,
+    seqdist_args={"method": "HAM"},
+    R=100,
+    sample_size=80,
+    sampling="random",
+    parallel=False,
+    random_state=42
+)
+serial_time = time.time() - start
+print(f"Serial execution: {serial_time:.2f} seconds")
+
+# Parallel execution with 4 workers
+start = time.time()
+boot_parallel = bootclustrange(
+    clustrange,
+    seqdata,
+    seqdist_args={"method": "HAM"},
+    R=100,
+    sample_size=80,
+    sampling="random",
+    parallel=True,
+    n_jobs=4,  # Use 4 CPU cores
+    random_state=42
+)
+parallel_time = time.time() - start
+print(f"Parallel execution (4 cores): {parallel_time:.2f} seconds")
+print(f"Speedup: {serial_time / parallel_time:.2f}x")
+```
+
+**Parallel execution parameters:**
+
+- `parallel=True`: Enable parallel execution using ProcessPoolExecutor
+- `n_jobs=None`: Use all available CPU cores (default when parallel=True)
+- `n_jobs=N`: Use N CPU cores (e.g., n_jobs=4 for 4 cores)
+
+**When to use parallel execution:**
+
+1. **Large R values** (R ≥ 100): More bootstrap samples = more parallelization benefit
+2. **Large datasets** (N ≥ 500): Distance computation dominates runtime
+3. **Multiple K values**: More clustering solutions to evaluate per bootstrap
+4. **Multi-core systems**: At least 4 cores recommended for noticeable speedup
+
+**Performance considerations:**
+
+- **Overhead**: Parallel execution has startup overhead (~1-2 seconds). For small tasks (R < 50, N < 200), serial execution may be faster.
+- **Memory**: Each worker process loads its own copy of the data. Monitor memory usage for very large datasets.
+- **Scaling**: Expected speedup ≈ min(n_jobs, R) up to ~4-8 cores, then diminishing returns due to I/O and aggregation costs.
+
+**Progress bars with parallel execution:**
+
+```{python}
+# docs-audit: expensive pair=boot-base-smoke
+# Parallel execution with progress monitoring (requires tqdm)
+try:
+    boot_progress = bootclustrange(
+        clustrange,
+        seqdata,
+        seqdist_args={"method": "HAM"},
+        R=100,
+        sample_size=80,
+        sampling="random",
+        parallel=True,
+        n_jobs=4,
+        progressbar=True,  # Show progress bar
+        random_state=42,
+    )
+    print("Bootstrap with progress bar complete!")
+except ImportError:
+    print("Install tqdm for progress bars: pip install tqdm")
+```
+
+## Reporting Bootstrap Results
+
+**In publications, report:**
+
+1. Bootstrap parameters: R, sample_size, sampling strategy
+2. Mean and std (or 95% CI) for key metrics at each K
+3. Visual representation (box plots or density plots)
+4. Stability assessment: "K=X showed low variance (std=Y) across R=Z bootstraps"
+
+**Example text:**
+> "Clustering stability was assessed using bootstrap validation with R=500 resamples
+> of size n=1000, using stratified sampling to maintain cluster proportions. For K=3,
+> the average silhouette width (ASW) was 0.45 ± 0.03 (mean ± std), with 95% CI [0.39, 0.51],
+> indicating a stable clustering solution."
+
+# Summary
+
+**Key takeaways:**
+
+1. **Bootstrap validation** assesses clustering stability via resampling
+2. **Use bootclustrange()** to get distributions of quality metrics
+3. **Choose sampling strategy** based on your data structure:
+   - Random: General purpose
+   - Clustering (stratified): Maintains cluster structure
+   - Medoids: For CLARA-like algorithms
+4. **R ≥ 100** for reliable confidence intervals
+5. **Visualize** distributions to identify stable K values
+6. **Report** bootstrap statistics alongside point estimates
+
+**Next steps:**
+- Try bootstrap validation on your sequence data
+- Compare multiple clustering methods using `wcCmpCluster`
+- Explore advanced property extraction with `seqpropclust`
+
+For more tutorials, see:
+- `wccmpcluster_tutorial.qmd` - Comparing clustering methods
+- `../WORKFLOW_GUIDE.md` - Complete analysis workflow

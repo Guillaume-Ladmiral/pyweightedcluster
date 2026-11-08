@@ -1,0 +1,35 @@
+---
+title: "SeqClara Range (seqclararange)"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Overview
+
+This vignette demonstrates seqclararange with weighted subsampling and multiple criteria.
+
+```{python}
+# docs-audit: sequential id=seqclararange-smoke
+import numpy as np
+from weightedcluster import seqclararange, plot_seqclararange_stability
+
+# Toy integer-coded sequences (N,T)
+rng = np.random.default_rng(0)
+N, T, S = 100, 20, 4
+X = rng.integers(0, S, size=(N, T))
+
+sc = seqclararange(X, R=20, kvals=[2,3,4], seqdist_args={"method":"HAM"}, criteria=["distance"])
+list(sc.keys())
+```

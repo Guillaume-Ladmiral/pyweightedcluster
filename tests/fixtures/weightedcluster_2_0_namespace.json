@@ -1,0 +1,906 @@
+{
+  "exports": [
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "object",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "default": "1",
+          "name": "R",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "samplesize",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "as.clustrange"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "object",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": "TRUE",
+          "name": "weighted",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "as.seqtree"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "object",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": "list(method = \"LCS\")",
+          "name": "seqdist.args",
+          "required": false
+        },
+        {
+          "default": "100",
+          "name": "R",
+          "required": false
+        },
+        {
+          "default": "1000",
+          "name": "sample.size",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "parallel",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "progressbar",
+          "required": false
+        },
+        {
+          "default": "\"clustering\"",
+          "name": "sampling",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "strata",
+          "required": false
+        }
+      ],
+      "name": "bootclustrange"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "clustrange",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "covar",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        }
+      ],
+      "name": "clustassoc"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "st",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "k",
+          "required": true
+        },
+        {
+          "default": "TRUE",
+          "name": "labels",
+          "required": false
+        }
+      ],
+      "name": "dtcut"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "group",
+          "required": false
+        },
+        {
+          "default": "0",
+          "name": "membership.threashold",
+          "required": false
+        },
+        {
+          "default": "\"i\"",
+          "name": "type",
+          "required": false
+        },
+        {
+          "default": "TRUE",
+          "name": "members.weighted",
+          "required": false
+        },
+        {
+          "default": "1",
+          "name": "memb.exp",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "fuzzyseqplot"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "formula",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "data",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": "TRUE",
+          "name": "robust",
+          "required": false
+        },
+        {
+          "default": "500",
+          "name": "R",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "kmedoid",
+          "required": false
+        },
+        {
+          "default": "\"ward.D\"",
+          "name": "hclust.method",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "fixed",
+          "required": false
+        },
+        {
+          "default": "10",
+          "name": "ncluster",
+          "required": false
+        },
+        {
+          "default": "\"HC\"",
+          "name": "cqi",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "parallel",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "progressbar",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "fisher.transform",
+          "required": false
+        },
+        {
+          "default": "lme4::lmerControl()",
+          "name": "lmerCtrl",
+          "required": false
+        }
+      ],
+      "name": "rarcat"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": "100",
+          "name": "R",
+          "required": false
+        },
+        {
+          "default": "40 + 2 * max(kvals)",
+          "name": "sample.size",
+          "required": false
+        },
+        {
+          "default": "2:10",
+          "name": "kvals",
+          "required": false
+        },
+        {
+          "default": "list(method = \"LCS\")",
+          "name": "seqdist.args",
+          "required": false
+        },
+        {
+          "default": "c(\"crisp\", \"fuzzy\", \"representativeness\", \"noise\")",
+          "name": "method",
+          "required": false
+        },
+        {
+          "default": "1.5",
+          "name": "m",
+          "required": false
+        },
+        {
+          "default": "c(\"distance\")",
+          "name": "criteria",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "stability",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "dnoise",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "parallel",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "progressbar",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "keep.diss",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "max.dist",
+          "required": false
+        }
+      ],
+      "name": "seqclararange"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "group",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": "TRUE",
+          "name": "weighted",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "perc",
+          "required": false
+        }
+      ],
+      "name": "seqclustname"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": "c(\"combined\", \"duration\", \"sequencing\", \"stateindep\", \"Markov\", \"userpos\")",
+          "name": "model",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "imp.trans",
+          "required": false
+        },
+        {
+          "default": "-1",
+          "name": "imp.trans.limit",
+          "required": false
+        },
+        {
+          "default": "\"trate\"",
+          "name": "trate",
+          "required": false
+        },
+        {
+          "default": "\"freq\"",
+          "name": "begin",
+          "required": false
+        },
+        {
+          "default": "TRUE",
+          "name": "time.varying",
+          "required": false
+        },
+        {
+          "default": "TRUE",
+          "name": "weighted",
+          "required": false
+        }
+      ],
+      "name": "seqnull"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "clustrange",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "R",
+          "required": true
+        },
+        {
+          "default": "c(\"combined\", \"duration\", \"sequencing\", \"stateindep\", \"Markov\", \"userpos\")",
+          "name": "model",
+          "required": false
+        },
+        {
+          "default": "list()",
+          "name": "seqdist.args",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "kmedoid",
+          "required": false
+        },
+        {
+          "default": "\"ward.D\"",
+          "name": "hclust.method",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "parallel",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "progressbar",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "seqnullcqi"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "seqdata",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": "c(\"state\", \"duration\", \"spell.age\", \"spell.dur\", \"transition\", \"pattern\", \"AFtransition\", \"AFpattern\", \"Complexity\")",
+          "name": "properties",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "other.prop",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "prop.only",
+          "required": false
+        },
+        {
+          "default": "0.05",
+          "name": "pmin.support",
+          "required": false
+        },
+        {
+          "default": "-1",
+          "name": "max.k",
+          "required": false
+        },
+        {
+          "default": "TRUE",
+          "name": "with.missing",
+          "required": false
+        },
+        {
+          "default": "1",
+          "name": "R",
+          "required": false
+        },
+        {
+          "default": "\"diss\"",
+          "name": "weight.permutation",
+          "required": false
+        },
+        {
+          "default": "0.01",
+          "name": "min.size",
+          "required": false
+        },
+        {
+          "default": "5",
+          "name": "max.depth",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "maxcluster",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "seqpropclust"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "x",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "wcAggregateCases"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "clustering",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        }
+      ],
+      "name": "wcClusterQuality"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "maxcluster",
+          "required": true
+        },
+        {
+          "default": "\"all\"",
+          "name": "method",
+          "required": false
+        },
+        {
+          "default": "TRUE",
+          "name": "pam.combine",
+          "required": false
+        }
+      ],
+      "name": "wcCmpCluster"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "kvals",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "default": "1",
+          "name": "R",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "samplesize",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "wcKMedRange"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "k",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "default": "1",
+          "name": "npass",
+          "required": false
+        },
+        {
+          "default": "NULL",
+          "name": "initialclust",
+          "required": false
+        },
+        {
+          "default": "\"PAMonce\"",
+          "name": "method",
+          "required": false
+        },
+        {
+          "default": "FALSE",
+          "name": "cluster.only",
+          "required": false
+        },
+        {
+          "default": "0",
+          "name": "debuglevel",
+          "required": false
+        }
+      ],
+      "name": "wcKMedoids"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "properties",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "maxcluster",
+          "required": false
+        },
+        {
+          "default": null,
+          "name": "...",
+          "required": false
+        }
+      ],
+      "name": "wcPropertyClustering"
+    },
+    {
+      "formals": [
+        {
+          "default": null,
+          "name": "diss",
+          "required": true
+        },
+        {
+          "default": null,
+          "name": "clustering",
+          "required": true
+        },
+        {
+          "default": "NULL",
+          "name": "weights",
+          "required": false
+        },
+        {
+          "default": "\"ASW\"",
+          "name": "measure",
+          "required": false
+        }
+      ],
+      "name": "wcSilhouetteObs"
+    }
+  ],
+  "packages": {
+    "TraMineR": "2.2-14",
+    "WeightedCluster": "2.0"
+  },
+  "s3_methods": [
+    {
+      "class": "hclust",
+      "generic": "as.clustrange",
+      "implementation": "as.clustrange.hclust"
+    },
+    {
+      "class": "twins",
+      "generic": "as.clustrange",
+      "implementation": "as.clustrange.twins"
+    },
+    {
+      "class": "dtclust",
+      "generic": "as.clustrange",
+      "implementation": "as.clustrange.dtclust"
+    },
+    {
+      "class": "default",
+      "generic": "as.clustrange",
+      "implementation": "as.clustrange.default"
+    },
+    {
+      "class": "hclust",
+      "generic": "as.seqtree",
+      "implementation": "as.seqtree.hclust"
+    },
+    {
+      "class": "twins",
+      "generic": "as.seqtree",
+      "implementation": "as.seqtree.twins"
+    },
+    {
+      "class": "default",
+      "generic": "as.seqtree",
+      "implementation": "as.seqtree.default"
+    },
+    {
+      "class": "clustrange",
+      "generic": "print",
+      "implementation": "print.clustrange"
+    },
+    {
+      "class": "clustrange",
+      "generic": "plot",
+      "implementation": "plot.clustrange"
+    },
+    {
+      "class": "clustrange",
+      "generic": "summary",
+      "implementation": "summary.clustrange"
+    },
+    {
+      "class": "clustassoc",
+      "generic": "plot",
+      "implementation": "plot.clustassoc"
+    },
+    {
+      "class": "clustrangefamily",
+      "generic": "print",
+      "implementation": "print.clustrangefamily"
+    },
+    {
+      "class": "clustrangefamily",
+      "generic": "plot",
+      "implementation": "plot.clustrangefamily"
+    },
+    {
+      "class": "clustrangefamily",
+      "generic": "summary",
+      "implementation": "summary.clustrangefamily"
+    },
+    {
+      "class": "seqclararange",
+      "generic": "plot",
+      "implementation": "plot.seqclararange"
+    },
+    {
+      "class": "bootclustrange",
+      "generic": "print",
+      "implementation": "print.bootclustrange"
+    },
+    {
+      "class": "bootclustrange",
+      "generic": "plot",
+      "implementation": "plot.bootclustrange"
+    },
+    {
+      "class": "rarcat",
+      "generic": "print",
+      "implementation": "print.rarcat"
+    },
+    {
+      "class": "rarcat",
+      "generic": "plot",
+      "implementation": "plot.rarcat"
+    },
+    {
+      "class": "rarcat",
+      "generic": "summary",
+      "implementation": "summary.rarcat"
+    },
+    {
+      "class": "seqnullcqi",
+      "generic": "print",
+      "implementation": "print.seqnullcqi"
+    },
+    {
+      "class": "seqnullcqi",
+      "generic": "plot",
+      "implementation": "plot.seqnullcqi"
+    },
+    {
+      "class": "kmedoids",
+      "generic": "print",
+      "implementation": "print.kmedoids"
+    },
+    {
+      "class": "wcAggregateCases",
+      "generic": "print",
+      "implementation": "print.wcAggregateCases"
+    },
+    {
+      "class": "data.frame",
+      "generic": "wcAggregateCases",
+      "implementation": "wcAggregateCases.data.frame"
+    },
+    {
+      "class": "stslist",
+      "generic": "wcAggregateCases",
+      "implementation": "wcAggregateCases.stslist"
+    },
+    {
+      "class": "matrix",
+      "generic": "wcAggregateCases",
+      "implementation": "wcAggregateCases.matrix"
+    },
+    {
+      "class": "default",
+      "generic": "wcAggregateCases",
+      "implementation": "wcAggregateCases.default"
+    }
+  ],
+  "schema_version": 1
+}

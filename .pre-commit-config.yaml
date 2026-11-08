@@ -1,0 +1,28 @@
+exclude: |
+  (?x)^(
+    archive/
+    | graphify-out/
+    | orig_R_pkg/
+    | docs/maintainers/BAYESIAN_RARCAT_B1_SPIKE_REPORT.md
+    | docs/maintainers/IMPLEMENT_BAYESIAN_RARCAT_B1_PROMPT.md
+    | tests/_bayesian_rarcat_b1_spike.py
+    | tests/fixtures/bayesian_rarcat_b1_evidence.json
+    | tests/test_bayesian_rarcat_b1_spike.py
+  )
+repos:
+  - repo: https://github.com/psf/black
+    rev: 26.5.1
+    hooks:
+      - id: black
+        args: ["--line-length", "100"]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.20
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      - id: end-of-file-fixer

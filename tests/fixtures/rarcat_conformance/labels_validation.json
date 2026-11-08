@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "domain": "labels",
+  "split": "validation",
+  "frozen_before_product_change": true,
+  "corpus_id": "sha256:e78eea51ec11a3db738118bac9818a729898cf201e6df0e3b3c591c82486edb1",
+  "generator": {
+    "name": "pcg64-finite-bit-patterns",
+    "version": 1,
+    "bit_generator": "PCG64",
+    "seed": 2026072904,
+    "random_finite_count": 65536
+  },
+  "special_values": [
+    0.0,
+    -0.0,
+    1e-323,
+    -1e-323,
+    4503599627370495.5,
+    9007199254740994.0,
+    9.999999999999999e-06,
+    1.0000000000000001e+16,
+    8.98846567431158e+307,
+    -8.98846567431158e+307
+  ],
+  "special_classes": [
+    "signed_zero",
+    "subnormal_neighbor",
+    "integer_boundary_neighbor",
+    "decimal_scientific_transition_neighbor",
+    "large_finite",
+    "both_signs"
+  ],
+  "nonfinite_roles_characterized_separately": [
+    "Inf",
+    "-Inf",
+    "NaN",
+    "missing"
+  ],
+  "rejected_candidates": [
+    "0x7ff8a2940b8fec68",
+    "0xfff3546de5f0e18e",
+    "0xfff347c70c3e8193",
+    "0x7ffcd6abb05038ba",
+    "0x7ffb4cc7ef27c1d2",
+    "0xfffe9061d800432b",
+    "0x7fff527efc8c1a91",
+    "0x7ff10aa1c4ce9f89",
+    "0x7fff21f7ea7768dc",
+    "0xfffadfd93aa52acc",
+    "0xfff03f29789030e9",
+    "0x7ff33068ab02860e",
+    "0x7ff512724630f11f",
+    "0xfff685af9a99df5e",
+    "0xfff587607104064e",
+    "0xffff28f74f6a1284",
+    "0xfff91c1950954734",
+    "0x7ff11580e4e0b700",
+    "0x7ffc44824b2e8550",
+    "0x7ff7e8d4c0c96b9c",
+    "0xfff7ae951d872c26",
+    "0x7ff455dd88c28509",
+    "0x7ff99510c0ef0ba7",
+    "0xfff5cf23335dd388",
+    "0xffff41b21ad2ee3e",
+    "0xfffb7764cd7f57f3",
+    "0xfff7394b640a8f85",
+    "0xfff7c263cdb5d322",
+    "0xfffab4d241d8e9ed",
+    "0x7fff3f45a555bf32",
+    "0xfff786f234c1af8f",
+    "0xfff2df97e1ff239b"
+  ],
+  "materialized_bits_id": "sha256:f7a643c697008fbd09f62122761fdca295d3d519a71d5665a474db9d6fba3f00",
+  "independent_holdout": {
+    "reserved": true,
+    "generator_seed_must_be_fresh": true
+  }
+}

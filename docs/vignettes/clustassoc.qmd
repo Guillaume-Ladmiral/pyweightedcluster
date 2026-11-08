@@ -1,0 +1,125 @@
+---
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Cluster–covariate association (clustassoc) in Python
+
+This vignette demonstrates how to assess association between clustering solutions and an external covariate using `clustassoc` and how to visualize the results.
+
+## Setup
+
+```{python}
+# docs-audit: sequential id=clustassoc-setup-smoke
+import numpy as np
+from weightedcluster import clustassoc, plot_clustassoc, wcKMedRange
+```
+
+We will create a small synthetic dataset with two obvious sequence groups and a covariate correlated with the grouping.
+
+```{python}
+# docs-audit: sequential
+# Sequences encoded as integers (two groups)
+X = np.array([
+    [0,0,0,0,0],
+    [0,0,0,0,1],
+    [0,0,0,1,1],
+    [1,1,1,1,1],
+    [1,1,1,1,0],
+    [1,1,1,0,0],
+], dtype=int)
+
+# Use Hamming distance for simplicity here
+from weightedcluster._seqdist import sequences_distance
+D = sequences_distance(X, metric="HAM", normalize=True)
+
+# Baseline clustering across K={2,3}
+rng = wcKMedRange(D, kvals=[2,3])
+list(rng["stats"].keys())
+```
+
+## Association with a numeric covariate
+
+```{python}
+# docs-audit: sequential
+# Numeric covariate: larger for the second group
+covar = np.array([0.1, 0.2, 0.3, 2.0, 2.1, 2.2])
+
+assoc = clustassoc(rng, D, covar)
+list(assoc), assoc.r_class, assoc.row_names
+```
+
+The structure includes:
+- The exact R table columns `Unaccounted`, `Remaining`, `BIC`, and
+  `numcluster`, in that order.
+- BIC audit fields available through `assoc.additions`: `BICLogLik`, `BICDf`,
+  `BICNobs`, and `BICConverged`.
+- The derived off-table field `assoc.additions["BICgain"]`.
+- Percent improvements vs the "No Clustering" baseline:
+  - `RemainingPctOfBaseline`, `RemainingImprovementPct`, `UnaccountedImprovementPct`.
+- `r_class` and `row_names` metadata matching the R `clustassoc` data frame.
+
+The dict interface intentionally contains only the exact R table. Typed
+`copy()` preserves an independent `.additions` mapping; `dict(assoc)` and JSON
+serialization omit those Python-only diagnostics.
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import plot_clustassoc
+fig, ax = plot_clustassoc(assoc, stat="BIC", tooltip=False)
+fig, ax = plot_clustassoc(assoc, stat="Remaining", type="b", tooltip=False)
+ax.set_ylabel("Unexplained association")
+```
+
+If you have `mplcursors` installed, hover tooltips will show `K` and the value.
+When `tooltip=True` (the default) but that optional package is unavailable, the
+plot is still returned and a `RuntimeWarning` states that tooltips are disabled;
+pass `tooltip=False` when hover interaction is not wanted.
+The explicit label in the second example is intentional: WeightedCluster 2.0's
+source looks up the legacy names `residualProp` and `residual`, so its
+documented `Unaccounted` and `Remaining` selections produce an `NA` y-axis
+label. The Python plot preserves that source behavior; set a label on the
+returned axis when desired.
+
+## Categorical covariate
+
+```{python}
+# docs-audit: sequential
+cov_cat = np.array(["A","A","A","B","B","B"])  # aligned with groups
+assoc_cat = clustassoc(rng, D, covar=cov_cat)
+fig, ax = plot_clustassoc(assoc_cat, stat="BIC", tooltip=False)
+```
+
+## Notes
+
+- `Remaining` and `Unaccounted` follow WeightedCluster 2.0 by delegating the
+  one- and two-term discrepancy models to `traminex.dissmfacw` with one
+  deterministic replicate.
+- Missing covariate rows are removed consistently from the distance,
+  clustering, weight, discrepancy, and regression inputs. Unused factor levels
+  retain the installed `nnet::multinom` warnings.
+- Numeric `BIC` follows `BIC(lm(..., weights=))`, including the Gaussian
+  variance parameter and zero-weight observation rule. Categorical `BIC`
+  follows the frequency-weighted `nnet::multinom` likelihood and parameter
+  count. The diagnostic fields make those sufficient statistics inspectable.
+- A separated categorical model has no finite maximum-likelihood coefficient.
+  As in R nnet, the local BFGS fit stops when the objective crosses
+  `abstol=1e-4`; `BICConverged` records the outcome. SciPy and nnet can cross
+  that boundary on different BFGS steps, so separated-fit BIC parity is tested
+  with absolute tolerance `2e-4` rather than described as bit-exact.
+- Otherwise the categorical `BIC` is the converged likelihood, also where a
+  cluster lacks a category. R's `multinom` stops at its default `reltol`, so
+  R's value is higher by up to 3.2e-6, or 2.4e-3 when a cluster lacks a
+  category (60 random cases, 2026-11-07); it is never lower.

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "domain": "glm_ame",
+  "split": "development",
+  "frozen_before_product_change": true,
+  "corpus_id": "sha256:62421adb2da9dd1b3ca8e6bc4a0790f40a8d141de37f076daf79f9e820b8f059",
+  "generator": {
+    "name": "stratified-glm-ame",
+    "version": 1,
+    "seed": 2026072905,
+    "formula": "cluster ~ x + group + binary + x:group + I(x^2)",
+    "scale_bands": {
+      "small": 0.03,
+      "ordinary": 2.5,
+      "large": 60.0
+    },
+    "balance_counts": {
+      "balanced": [30, 30, 30],
+      "moderate": [20, 30, 40],
+      "imbalanced": [15, 25, 50]
+    }
+  },
+  "candidate_count": 30,
+  "accepted_case_count": 30,
+  "accepted_case_ids": {
+    "prefix": "development-glm-",
+    "start": 0,
+    "stop": 30
+  },
+  "rejected_candidates": [],
+  "legacy_regressions": [
+    20260751,
+    20260752,
+    20260753,
+    20260754,
+    20260755
+  ],
+  "acceptance_rule": "full-rank, all levels used, warning-free, all one-vs-rest GLMs converged",
+  "independent_holdout": {
+    "reserved": true,
+    "generator_seed_must_be_fresh": true
+  }
+}

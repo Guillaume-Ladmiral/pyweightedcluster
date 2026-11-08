@@ -1,0 +1,141 @@
+---
+title: "CLARA for sequences: criteria and fuzzy modes"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Overview
+
+This vignette demonstrates CLARA-style clustering for sequences using `seqclararange`, with:
+
+- Crisp and fuzzy c-medoids modes on subsamples
+- The five WeightedCluster 2.0 criteria on full data: distance,
+  Davies–Bouldin (DB), Xie–Beni (XB), PBM, and Average Marginal Silhouette
+  (AMS)
+- Python-only criteria add PBC, HG, HGSD, ASW, ASWw, CH, R2, CHsq, R2sq, and
+  HC
+- Selection minimizes distance, DB, XB, and HC and maximizes PBM, AMS, PBC, HG,
+  HGSD, ASW, ASWw, CH, R2, CHsq, and R2sq. This keeps HC aligned with
+  `clustrange` and `clustrangefamily`; a family result is returned when multiple
+  criteria are requested
+- Optional export of full-data membership matrices for the best fuzzy solution via `export_membership=True`
+
+## Data
+
+We will use a tiny toy dataset with two groups of sequences.
+
+```{python}
+# docs-audit: sequential id=seqclararange-fuzzy-setup-smoke
+import numpy as np
+X = np.array([
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 0],
+], dtype=int)
+N, T = X.shape
+N, T
+```
+
+## Crisp CLARA with Optimal Matching and DB selection
+
+By default, `seqclararange` subsamples the data R times, clusters the subsample, and projects medoids back to the full data.
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import seqclararange
+out = seqclararange(
+    X,
+    R=10,
+    sample_size=4,
+    kvals=[2, 3],
+    seqdist_args={"method": "OM", "indel": 1.0},
+    method="crisp",
+    criteria=("db",),  # select the best run by minimum DB
+    random_state=123,
+)
+list(out["stats"].keys())  # includes DB, XB, PBM, AMS in addition to usual stats
+```
+
+Passing more than one criterion returns a family object with one range per
+criterion. See `seqclararange_family.qmd` for that workflow.
+
+Check the selected clustering and indices:
+
+```{python}
+# docs-audit: sequential
+kvals = out["kvals"]
+for i, k in enumerate(kvals):
+    print(f"K={k}")
+    print("  clustering:", out["clustering"][f"cluster{k}"])
+    print("  DB/XB/PBM:", out["stats"]["DB"][i], out["stats"]["XB"][i], out["stats"]["PBM"][i])
+```
+
+You can also compute DB/XB/PBM directly for your own clustering on a full distance matrix:
+
+```{python}
+# docs-audit: sequential
+from weightedcluster._seqdist import sequences_distance
+from weightedcluster import db_index, xb_index, pbm_index
+
+D = sequences_distance(X, metric="OM", normalize=True, indel=1.0)
+labels = out["clustering"]["cluster2"]
+print("DB:", db_index(D, labels))
+print("XB:", xb_index(D, labels))
+print("PBM:", pbm_index(D, labels))
+```
+
+## Fuzzy CLARA with AMS selection and membership export
+
+The fuzzy mode uses `fcmdd` under the hood on subsample distances, then projects medoids back to the full data and computes fuzzy memberships via inverse distances.
+
+```{python}
+# docs-audit: sequential
+out_fz = seqclararange(
+    X,
+    R=10,
+    sample_size=4,
+    kvals=[2],
+    seqdist_args={"method": "HAM"},
+    method="fuzzy",
+    m=1.6,
+    criteria=("ams",),          # maximize AMS
+    export_membership=True,
+    random_state=42,
+)
+
+k = 2
+best_membership = out_fz["clara"][k].get("membership")
+print("Membership exported?", best_membership is not None)
+if best_membership is not None:
+    import numpy as np
+    U = np.array(best_membership, dtype=float)
+    print("shape:", U.shape, "row sums:", np.round(U.sum(axis=1), 4))
+```
+
+Notes:
+- For `method="fuzzy"`, `membership` has shape (N, K).
+- For `method="noise"`, the exported matrix includes an extra noise column (N, K+1).
+
+## Ward linkage note (hierarchical comparisons)
+
+If you compare clustering methods with `wcCmpCluster`, the default `ward` path runs exact `ward.D2` directly on the distance matrix. Enable the embedding step only if you explicitly want the optional classical-MDS approximation mode:
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import wcCmpCluster
+cmp_out = wcCmpCluster(D, maxcluster=3, method=["ward"])
+list(cmp_out.keys())
+```

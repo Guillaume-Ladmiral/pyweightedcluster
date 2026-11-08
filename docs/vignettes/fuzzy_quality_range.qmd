@@ -1,0 +1,150 @@
+---
+title: "Fuzzy c-medoids: range and quality metrics"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Overview
+
+This vignette introduces two fuzzy clustering utilities on precomputed distances:
+
+- `wcFuzzyRange`: runs fuzzy c-medoids across a range of K, returning memberships, medoids, and quality metrics per K.
+- `wcFuzzyQuality`: computes fuzzy partition coefficients and indices (FPC, FPE, XBf, AMS) for a given membership matrix on a full distance matrix.
+
+It complements the CLARA-style `seqclararange` function, which integrates fuzzy modes and also reports fuzzy metrics when memberships are available.
+
+## Example data and distances
+
+We will build a tiny sequence dataset and compute Hamming distances. Any symmetric distance matrix `(N,N)` may be used with the fuzzy APIs.
+
+```{python}
+# docs-audit: sequential id=fuzzy-range-setup-smoke
+import numpy as np
+from weightedcluster._seqdist import sequences_distance
+
+X = np.array([
+    [0, 0, 0, 0],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+    [1, 1, 1, 0],
+], dtype=int)
+
+D = sequences_distance(X, metric="HAM", normalize=True)
+D
+```
+
+## Fuzzy range: FCMdd over K and metrics per K
+
+Run FCMdd for K in {2,3}, then inspect FPC/FPE/XBf/AMS per K.
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import wcFuzzyRange
+
+fz = wcFuzzyRange(D, kvals=[2, 3], method="FCMdd", m=1.6, random_state=42)
+list(fz.keys()), list(fz["stats"].keys())
+```
+
+Inspect per-K results and the membership/medoids objects:
+
+```{python}
+# docs-audit: sequential
+for i, k in enumerate(fz["kvals"]):
+    print(f"K={k}")
+    print("  FPC/FPE/XBf/AMS:", fz["stats"]["FPC"][i], fz["stats"]["FPE"][i], fz["stats"]["XBf"][i], fz["stats"]["AMS"][i])
+    U = fz["memb"][f"cluster{k}"]
+    med = fz["medoids"][f"cluster{k}"]
+    print("  memb shape:", U.shape, "medoids:", med.tolist())
+```
+
+Notes:
+- `method` can be `"FCMdd"` or `"PCMdd"`; PCMdd also requires `eta`.
+- The noise variants `"NCdd"` and `"HNCdd"` are refused here. They return an
+  `(N, K+1)` membership with a trailing noise column, and the fuzzy quality
+  indices have no defined treatment of that column. Call
+  `weightedcluster.fuzzy.fcmdd` directly for them.
+
+## Fuzzy quality for a single solution
+
+You can also compute fuzzy indices directly for a given `(D, U)` pair (and optional `medoids`). Below we reuse K=2 from the range.
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import wcFuzzyQuality
+
+k = 2
+U = fz["memb"][f"cluster{k}"]
+med = fz["medoids"][f"cluster{k}"]
+q = wcFuzzyQuality(D, U, medoids=med, m=1.6)
+q["stats"]
+```
+
+Interpretation hints:
+- FPC (partition coefficient): closer to 1 indicates crisper partitions.
+- FPE (partition entropy): closer to 0 indicates crisper partitions. Every
+  exact positive membership contributes `-u * log(u)`; exact zero contributes
+  zero without evaluating its logarithm.
+- XBf (fuzzy Xie–Beni with medoids): lower is better (compact clusters well separated by medoids).
+- AMS (average marginal silhouette): higher is better; silhouette weighted by the margin between top-2 memberships.
+
+Finite membership rows are normalized safely even when their raw sum would
+overflow. The original validated finite case-weight vector is forwarded
+unchanged through PAM, FCMdd, and quality stages. Case weights are analysis
+ratios: multiplying every weight by one finite positive constant leaves PAM,
+FCMdd, medoids, FPC/FPE, XBf, silhouette, and AMS unchanged because each stage
+uses its own exact or relative accumulator; no shared normalized vector is
+materialized. Changing finite distance units does not underflow or overflow
+their dimensionless result. When one matrix mixes unit-scale and extremely tiny
+separations, fuzzy medoid/XBf helpers retain local distance, raw-weight, and
+membership-power exponents until the ratio forms; only mathematically
+exact-zero coefficients are excluded. Exported observation silhouettes retain
+their exact ordinary operation path. Range-risk inputs use exact dyadic
+distance-weight products and signed final ratios. ASW preserves its absolute
+weighted-size correction and below-one guard, while ASWw is invariant to a
+finite common weight scale. This
+is a deliberate numerical improvement over installed WeightedCluster 2.0 at
+the extreme large-distance boundary. Exact-zero row/weight totals remain
+invalid, and an exact-zero distance matrix retains its degenerate meaning.
+
+## Integration with CLARA for sequences
+
+When you run `seqclararange` in fuzzy modes (`method="fuzzy"` or `"pcmdd"`), the returned
+`quality_stats` for each K include the fuzzy metrics reported above (`FPC`, `FPE`, `XBf`, `AMS`)
+in addition to the extended indices from `wcClusterQuality`. The core `stats` table keeps the
+R-style columns (`Avg dist`, `PBM`, `DB`, `XB`, `AMS`, stability counts, and best iteration).
+Its DB/AMS assembly keeps membership/confidence and raw-weight factors separate,
+and its crisp/fuzzy XB/PBM assembly keeps a range-risk distance functional until
+the final ratio, so a common subnormal unit cannot disappear prematurely.
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import seqclararange
+
+out = seqclararange(
+    X,
+    R=10,
+    sample_size=4,
+    kvals=[2],
+    seqdist_args={"method": "HAM"},
+    method="fuzzy",
+    m=1.6,
+    criteria=("ams",),
+    export_membership=True,
+    random_state=123,
+)
+print("keys in stats:", list(out["stats"].keys()))
+print("keys in quality_stats:", list(out["quality_stats"].keys()))
+print("FPC for K=2:", out["quality_stats"]["FPC"][0])
+```

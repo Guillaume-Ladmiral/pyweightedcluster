@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "domain": "crossed_reml",
+  "split": "validation",
+  "frozen_before_product_change": true,
+  "corpus_id": "sha256:340091e74fceb65a085ff260360afa37fe313278b10765244edcdbb8976d4afe",
+  "generator": {
+    "name": "stratified-crossed-reml",
+    "version": 1,
+    "seed": 2026072908,
+    "regimes": [
+      "near_zero_residual",
+      "singular",
+      "stable_interior",
+      "near_zero_component",
+      "nonconverged"
+    ],
+    "weight_patterns": [
+      "challenging_ratio",
+      "moderate_ratio",
+      "nonconstant",
+      "constant"
+    ],
+    "observation_group_range": [3, 6],
+    "bootstrap_group_range": [3, 6]
+  },
+  "candidate_count": 71,
+  "accepted_case_count": 64,
+  "accepted_case_ids": {
+    "prefix": "validation-reml-",
+    "candidate_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      21,
+      22,
+      23,
+      24,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      41,
+      42,
+      43,
+      44,
+      46,
+      47,
+      48,
+      49,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69
+    ]
+  },
+  "rejected_candidates": [
+    {
+      "case_id": "validation-reml-020",
+      "candidate_index": 20,
+      "seed": 2026072928,
+      "input_id": "sha256:bd63963c59bd5094e48fa7ec436d8e2e726220127fe0d1f6bda65986900ac24e",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    },
+    {
+      "case_id": "validation-reml-025",
+      "candidate_index": 25,
+      "seed": 2026072933,
+      "input_id": "sha256:647bd2023c2a07386353356ff24abae6bd92f966ab9e740f58cc12f9c5c6b7ce",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    },
+    {
+      "case_id": "validation-reml-040",
+      "candidate_index": 40,
+      "seed": 2026072948,
+      "input_id": "sha256:12af813ac5500a74ab8df539075c86232016a45efcc40ae184e8d3c17d9c4fda",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    },
+    {
+      "case_id": "validation-reml-045",
+      "candidate_index": 45,
+      "seed": 2026072953,
+      "input_id": "sha256:f8d4fbab78f6f28631cb54afad74b3c8723373ef0d390865d06e638ae2d35189",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    },
+    {
+      "case_id": "validation-reml-050",
+      "candidate_index": 50,
+      "seed": 2026072958,
+      "input_id": "sha256:2defd7c821d3a76fa32ea6d6b129d011ca54c64637d186c6e26e4b1405737a88",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    },
+    {
+      "case_id": "validation-reml-060",
+      "candidate_index": 60,
+      "seed": 2026072968,
+      "input_id": "sha256:d0ae0cc5bf5194fe1c74e4bc680b39f59c16242ffbfb974ac5a42ed429e60ab6",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    },
+    {
+      "case_id": "validation-reml-070",
+      "candidate_index": 70,
+      "seed": 2026072978,
+      "input_id": "sha256:c3c4708f42eb2d7f325e173574009c2d2895ff6c21553863988f2a397a30bd7a",
+      "reason": "lme4 error: Downdated VtV is not positive definite"
+    }
+  ],
+  "known_regressions": [],
+  "acceptance_rule": "valid lme4 input after explicit missing-AME omission; boundary and diagnostic states retained",
+  "independent_holdout": {
+    "reserved": true,
+    "generator_seed_must_be_fresh": true
+  }
+}

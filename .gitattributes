@@ -1,0 +1,54 @@
+# Ubuntu 24.04 is the canonical development platform. Store and check out text
+# as LF so copied Windows worktrees cannot reintroduce CRLF churn.
+* text=auto eol=lf
+
+# Explicit text types (defensive; all follow the repository-wide LF policy).
+*.py    text eol=lf
+*.pyi   text eol=lf
+*.R     text eol=lf
+*.r     text eol=lf
+*.Rd    text eol=lf
+*.Rnw   text eol=lf
+*.c     text eol=lf
+*.h     text eol=lf
+*.cpp   text eol=lf
+*.hpp   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.csv   text eol=lf
+*.tsv   text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.ini   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.qmd   text eol=lf
+*.sh    text eol=lf
+Makefile text eol=lf
+
+# This immutable historical input intentionally retains Markdown hard breaks;
+# its exact bytes are protected by a SHA-256 contract in the test suite.
+archive/audits/2026/AUDIT_REPORT_2026-08-27_WHOLE_CODEBASE_READONLY.md whitespace=-trailing-space
+
+# Historical Windows command files retain their native convention.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary formats must never undergo line-ending conversion.
+*.RData binary
+*.rda   binary
+*.rdb   binary
+*.rds   binary
+*.pdf   binary
+*.gz    binary
+*.zip   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.so    binary
+*.pyd   binary
+*.dll   binary
+*.dylib binary

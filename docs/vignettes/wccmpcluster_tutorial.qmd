@@ -1,0 +1,693 @@
+---
+title: "Comparing Clustering Methods with wcCmpCluster"
+subtitle: "Method Selection and Performance Comparison"
+author: "weightedcluster Python Package"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Introduction
+
+## Comparing Multiple Clustering Approaches
+
+Choosing the right clustering method is critical for sequence analysis. Different methods make different assumptions about cluster structure:
+
+- **Hierarchical methods**: Assume nested cluster structure
+- **Partitioning methods (PAM)**: Assume spherical, well-separated clusters
+- **Linkage strategies**: Define between-cluster distance differently
+
+The `wcCmpCluster()` function automates the comparison of multiple clustering methods across a range of K values, helping you:
+
+1. **Evaluate** multiple algorithms simultaneously
+2. **Compare** quality metrics across methods
+3. **Select** the most appropriate method for your data
+4. **Validate** clustering decisions objectively
+
+## Method Selection Criteria
+
+When choosing a clustering method, consider:
+
+- **Data structure**: Hierarchical vs. flat cluster organization
+- **Cluster shape**: Compact (PAM) vs. chain-like (single linkage)
+- **Computational cost**: PAM is slower than hierarchical methods
+- **Interpretability**: Ward linkage produces balanced, interpretable clusters
+- **Sensitivity**: Some methods are more sensitive to outliers
+
+## When to Use wcCmpCluster?
+
+Use `wcCmpCluster()` when:
+
+- You're unsure which clustering method suits your data
+- You want to compare hierarchical vs. partitioning approaches
+- You need to justify method selection in publications
+- You're exploring different linkage strategies
+- You want to validate that your chosen method outperforms alternatives
+
+# Available Methods
+
+## Hierarchical Methods
+
+### Average Linkage
+
+Distance between clusters = average of all pairwise distances:
+
+- **Best for**: Moderately sized, relatively balanced clusters
+- **Pros**: Robust to noise, produces reasonable results in most cases
+- **Cons**: Can produce elongated clusters
+
+### Complete Linkage
+
+Distance between clusters = maximum pairwise distance:
+
+- **Best for**: Well-separated, compact clusters
+- **Pros**: Produces tight, well-defined clusters
+- **Cons**: Sensitive to outliers, may break large clusters
+
+### Single Linkage
+
+Distance between clusters = minimum pairwise distance:
+
+- **Best for**: Detecting elongated or irregularly-shaped clusters
+- **Pros**: Can find non-spherical clusters
+- **Cons**: Prone to chaining effect, sensitive to noise
+
+### Ward Linkage (Exact `ward.D2` by Default)
+
+Minimizes within-cluster variance on the distance matrix via exact `ward.D2` updates by default:
+
+- **Best for**: Balanced, interpretable cluster hierarchies
+- **Pros**: Produces well-balanced dendrograms
+- **Cons**: Exact Ward is still an O(N³) hierarchical method
+- **Note**: `embed_then_ward=True` switches to an optional classical-MDS approximation mode
+
+### DIANA (Divisive Analysis)
+
+Top-down hierarchical clustering that ports `cluster::diana`'s native
+distance-based splinter, banner, and merge-order rules:
+
+- **Best for**: Finding dominant splits in data
+- **Pros**: May reveal top-level structure more clearly
+- **Cons**: Does not support observation weights
+
+### Beta-Flexible Linkage
+
+Lance-Williams flexible-beta method (β=0.625):
+
+- **Best for**: Intermediate between single and complete linkage
+- **Pros**: Adjustable agglomeration behavior
+- **Cons**: Computationally intensive (O(N³)), slow for N > 500
+
+## Partitioning Methods
+
+### PAM (Partitioning Around Medoids)
+
+K-medoids clustering optimizing within-cluster sum of distances:
+
+- **Best for**: Datasets with clear, compact clusters
+- **Pros**: Robust to outliers, produces representative medoids
+- **Cons**: Computationally expensive for large N
+- **Note**: Equivalent to wcKMedoids in weightedcluster
+
+# Basic Usage
+
+## Running wcCmpCluster with Default Settings
+
+```{python}
+# docs-audit: sequential id=cmp-data-smoke
+import numpy as np
+from weightedcluster import wcCmpCluster
+from weightedcluster._seqdist import sequences_distance
+
+# Set random seed
+np.random.seed(42)
+
+# Generate synthetic sequence data (N=80, T=8, 3 states)
+# Three groups with distinct patterns
+N = 80
+T = 8
+
+# Group 1: Mostly state 0
+group1 = np.zeros((N//3, T), dtype=int)
+for i in range(N//3):
+    group1[i] = [0, 0, 0, 1, 1, 0, 0, 0]
+
+# Group 2: Mostly state 1
+group2 = np.ones((N//3, T), dtype=int)
+for i in range(N//3):
+    group2[i] = [1, 1, 1, 0, 0, 1, 1, 1]
+
+# Group 3: Mostly state 2
+group3 = np.full((N - 2*(N//3), T), 2, dtype=int)
+for i in range(group3.shape[0]):
+    group3[i] = [2, 2, 2, 1, 1, 2, 2, 2]
+
+seqdata = np.vstack([group1, group2, group3])
+
+# Add noise
+noise_idx = np.random.choice(N, size=int(N * 0.08), replace=False)
+for idx in noise_idx:
+    seqdata[idx] = np.random.randint(0, 3, size=T)
+
+print(f"Sequence data shape: {seqdata.shape}")
+
+# Compute distance matrix
+diss = sequences_distance(seqdata, metric="HAM", normalize=True)
+print(f"Distance matrix shape: {diss.shape}")
+```
+
+Compare all methods:
+
+```{python}
+# docs-audit: sequential id=cmp-all-smoke
+# Bounded ordinary-suite equivalent: exercise every method used below except
+# the deliberately expensive flexible-beta path.
+result = wcCmpCluster(
+    diss,
+    maxcluster=6,
+    method=["average", "complete", "single", "ward.D2", "diana", "pam"],
+    embed_then_ward=False,
+    random_state=42,
+)
+print("Bounded method comparison complete")
+```
+
+The full `method="all"` comparison below additionally exercises flexible-beta
+linkage and is reserved for the extended Quarto audit.
+
+```{python}
+# docs-audit: expensive pair=cmp-all-smoke
+# Run wcCmpCluster with all available methods
+result = wcCmpCluster(
+    diss,
+    maxcluster=6,  # Test K=2 to 6
+    method="all",  # Compare all methods
+    embed_then_ward=False,  # Default exact ward.D2 path
+    random_state=42,
+)
+
+print("Methods compared:", [k for k in result.keys() if k not in ['allstats', 'param']])
+print(f"K values: {result['average']['kvals']}")
+```
+
+## Interpreting allstats Output
+
+The `allstats` key contains combined statistics across all methods:
+
+```{python}
+# docs-audit: sequential
+# View structure of allstats
+print("\\nallstats columns:", list(result['allstats'].keys()))
+
+# Show first few rows (K=2 for each method)
+import pandas as pd
+
+allstats_df = pd.DataFrame(result['allstats'])
+print("\\nFirst 6 rows (K=2 for each method):")
+print(allstats_df.head(6)[['method', 'ngroup', 'ASW', 'CH', 'PBC']])
+```
+
+## Selecting Best Method
+
+Identify the method with the best quality metrics:
+
+```{python}
+# docs-audit: sequential
+# For each K, find method with highest ASW
+for k in range(2, 7):
+    k_data = allstats_df[allstats_df['ngroup'] == k]
+    best_method = k_data.loc[k_data['ASW'].idxmax(), 'method']
+    best_asw = k_data['ASW'].max()
+    print(f"K={k}: Best method = {best_method} (ASW={best_asw:.3f})")
+```
+
+# Customization
+
+## Method Subsets
+
+Compare only specific methods:
+
+```{python}
+# docs-audit: sequential
+# Compare only hierarchical methods
+result_hier = wcCmpCluster(
+    diss,
+    maxcluster=5,
+    method=["average", "complete", "single"],
+    embed_then_ward=False
+)
+
+print("Hierarchical methods compared:",
+      [k for k in result_hier.keys() if k not in ['allstats', 'param']])
+```
+
+## Optional Ward Approximation via MDS
+
+By default, `wcCmpCluster(..., method=["ward"])` runs exact `ward.D2` directly on the precomputed distance matrix. Use MDS embedding only if you explicitly want the alternative approximation mode for benchmarking or comparison:
+
+```{python}
+# docs-audit: sequential
+# Enable optional classical-MDS Ward mode
+result_ward = wcCmpCluster(
+    diss,
+    maxcluster=4,
+    method=["ward", "average"],
+    embed_then_ward=True
+)
+
+print("Optional Ward MDS mode enabled")
+```
+
+**How it works:**
+1. Classical MDS embeds distance matrix into Euclidean space
+2. Ward linkage runs on embedded coordinates
+3. This is optional and slower than the default exact `ward.D2` distance-matrix path
+
+**When to use:**
+- You explicitly want classical MDS + Ward output
+- You want to benchmark the optional embedding mode against exact `ward.D2`
+- You are comparing two Ward implementations on the same dissimilarity matrix
+
+## Quality Metric Preferences
+
+Different metrics emphasize different cluster properties:
+
+```{python}
+# docs-audit: sequential
+# Extract key metrics for comparison
+methods = ['average', 'complete', 'pam']
+k = 3
+
+print(f"\\nQuality metrics for K={k}:")
+print(f"{'Method':<12} {'ASW':>8} {'CH':>10} {'PBC':>8}")
+print("-" * 40)
+
+for method in methods:
+    if method in result:
+        stats = result[method]['stats']
+        k_idx = result[method]['kvals'].index(k)
+        asw = stats['ASW'][k_idx]
+        ch = stats['CH'][k_idx]
+        pbc = stats['PBC'][k_idx]
+        print(f"{method:<12} {asw:>8.3f} {ch:>10.1f} {pbc:>8.3f}")
+```
+
+**Metric interpretation:**
+- **ASW > 0.5**: Well-separated clusters (prefer this method)
+- **CH**: Higher is better; compare relative values
+- **PBC**: Correlation between distance and cluster membership (higher = better separation)
+
+# Visualization
+
+## plot_clustrangefamily Examples
+
+Visualize method comparisons across K values:
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import plot_clustrangefamily
+import matplotlib.pyplot as plt
+
+# Panel plot: compare ASW across methods
+ward_method = next(name for name in ("ward.D2", "ward.d2", "ward") if name in result)
+fig, ax = plot_clustrangefamily(
+    result,
+    group="stat",  # Panel by statistic
+    method=["average", "complete", "pam", ward_method],
+    stat=["ASW", "CH", "PBC"],
+    norm="none"
+)
+plt.suptitle("Method Comparison: Quality Metrics by K", y=1.02)
+plt.tight_layout()
+fig
+```
+
+## Comparing Methods Across K Values
+
+Focus on a single metric:
+
+```{python}
+# docs-audit: sequential
+# Compare ASW only, normalized
+fig, ax = plot_clustrangefamily(
+    result,
+    group="stat",
+    method="all",
+    stat="ASW",
+    norm="none",
+    col=list(plt.get_cmap("tab20").colors[:len(result["param"]["method"])]),
+)
+ax[0].set_title("ASW Comparison Across Methods")
+ax[0].axhline(y=0.25, color='red', linestyle='--', alpha=0.5, label='Acceptable threshold')
+ax[0].legend()
+plt.tight_layout()
+fig
+```
+
+## Multi-Criteria Decision Making
+
+Visualize trade-offs between metrics:
+
+```{python}
+# docs-audit: sequential
+# Normalized comparison (range [0,1] per metric)
+fig, axes = plot_clustrangefamily(
+    result,
+    group="stat",
+    method=["average", "complete", "pam"],
+    stat=["ASW", "PBC", "R2"],
+    norm="range"  # Normalize to [0,1]
+)
+
+for ax in axes:
+    ax.set_ylabel("Normalized Value [0,1]")
+    ax.legend(loc='best')
+
+plt.suptitle("Normalized Quality Metrics", y=1.02)
+plt.tight_layout()
+fig
+```
+
+**Interpretation:**
+- Methods with high values across multiple metrics are robust
+- Trade-offs: One method excels in ASW, another in CH
+- Consistency: Look for methods that perform well across K values
+
+# Case Studies
+
+## Case Study 1: Comparing PAM vs Hierarchical
+
+**Question:** Should I use PAM or hierarchical clustering?
+
+```{python}
+# docs-audit: sequential
+# Compare PAM with three hierarchical methods
+comp_result = wcCmpCluster(
+    diss,
+    maxcluster=5,
+    method=["pam", "average", "complete", "ward"],
+    random_state=42,
+)
+
+# Analyze ASW for K=3
+k = 3
+print(f"\\nK={k} ASW Comparison:")
+for method in ["pam", "average", "complete", "ward"]:
+    if method in comp_result:
+        k_idx = comp_result[method]['kvals'].index(k)
+        asw = comp_result[method]['stats']['ASW'][k_idx]
+        print(f"  {method:<12}: {asw:.4f}")
+```
+
+**Decision criteria:**
+- PAM: Better if ASW >> hierarchical methods (more compact clusters)
+- Hierarchical: Better if you need dendrogram interpretation
+- Ward: Often best balance between interpretability and quality
+
+## Case Study 2: Method Performance Comparisons
+
+**Question:** Which linkage method is most stable across K?
+
+```{python}
+# docs-audit: sequential
+# Compare hierarchical linkages
+linkages = ["average", "complete", "single"]
+link_result = wcCmpCluster(
+    diss,
+    maxcluster=6,
+    method=linkages,
+    embed_then_ward=False
+)
+
+# Compute std of ASW across K for each method
+print("\\nASW Stability (std across K=2-6):")
+for method in linkages:
+    if method in link_result:
+        asw_values = link_result[method]['stats']['ASW']
+        asw_std = np.std(asw_values)
+        asw_mean = np.mean(asw_values)
+        print(f"  {method:<12}: mean={asw_mean:.3f}, std={asw_std:.3f}")
+```
+
+**Interpretation:**
+- **Low std**: Stable performance across K (reliable)
+- **High std**: Performance varies with K (less robust)
+- **Average linkage**: Typically most stable
+
+## Case Study 3: Real Sequence Data
+
+Let's compare methods on more realistic sequence data:
+
+```{python}
+# docs-audit: sequential
+# Generate career trajectory sequences
+# States: 0=Education, 1=Employment, 2=Unemployment, 3=Retirement
+np.random.seed(123)
+N = 100
+T = 15
+
+# Career pattern 1: Education → Employment → Retirement
+pattern1 = np.array([[0]*3 + [1]*10 + [3]*2] * (N//3))
+# Career pattern 2: Education → Employment with gaps
+pattern2 = np.array([[0]*2 + [1]*5 + [2]*2 + [1]*4 + [3]*2] * (N//3))
+# Career pattern 3: Early employment → Frequent unemployment
+pattern3 = np.array([[0] + [1, 2]*6 + [1] + [3]] * (N - 2*(N//3)))
+
+career_seqs = np.vstack([pattern1, pattern2, pattern3])
+
+# Add individual variation
+for i in range(N):
+    n_changes = np.random.randint(0, 3)
+    for _ in range(n_changes):
+        t = np.random.randint(0, T)
+        career_seqs[i, t] = np.random.randint(0, 4)
+
+print(f"Career sequences shape: {career_seqs.shape}")
+
+# Compute distance
+career_diss = sequences_distance(career_seqs, metric="OM", normalize=True, indel=1.0)
+
+# Compare methods
+career_result = wcCmpCluster(
+    career_diss,
+    maxcluster=5,
+    method=["pam", "average", "ward", "diana"],
+    random_state=42,
+)
+
+print("\\nCareer data analysis complete")
+```
+
+Analyze results:
+
+```{python}
+# docs-audit: sequential
+# Find best method for K=3 (assuming 3 career patterns)
+k_target = 3
+print(f"\\nBest method for K={k_target} (career patterns):")
+
+best_asw = -1
+best_method = None
+
+for method in ["pam", "average", "ward", "diana"]:
+    if method in career_result:
+        k_idx = career_result[method]['kvals'].index(k_target)
+        asw = career_result[method]['stats']['ASW'][k_idx]
+        ch = career_result[method]['stats']['CH'][k_idx]
+        print(f"  {method:<10}: ASW={asw:.3f}, CH={ch:.1f}")
+        if asw > best_asw:
+            best_asw = asw
+            best_method = method
+
+print(f"\\nRecommendation: {best_method} (ASW={best_asw:.3f})")
+```
+
+# Method-Specific Considerations
+
+## When to Use Each Method
+
+| Method | Best Use Case | Pros | Cons |
+|--------|---------------|------|------|
+| **PAM** | Compact, well-separated clusters | Robust, finds medoids | Slow for large N |
+| **Average** | General purpose, balanced clusters | Stable, robust | Can merge dissimilar items |
+| **Complete** | Tight, homogeneous clusters | Avoids chaining | Sensitive to outliers |
+| **Single** | Elongated, irregular shapes | Finds non-spherical clusters | Prone to chaining |
+| **Ward** | Balanced hierarchies | Interpretable dendrograms | Exact O(N³); optional MDS mode is slower |
+| **DIANA** | Top-down structure exploration | Reveals major splits | No observation weights |
+| **Flexible** | Intermediate behavior | Adjustable properties | Very slow (O(N³)) |
+
+## Computational Considerations
+
+**Runtime comparison (rough order-of-growth, N=1000, K=2-10):**
+
+| Method | Time Complexity | Relative Speed |
+|--------|----------------|----------------|
+| Single, Complete, Average | O(N² log N) | Fast (seconds) |
+| Ward (exact `ward.D2`) | O(N³) | Medium (tens of seconds) |
+| PAM | O(N² K iter) | Slow (minutes) |
+| DIANA | O(N² K) | Medium (tens of seconds) |
+| Flexible | O(N³) | Very slow (minutes) |
+
+If you enable `embed_then_ward=True`, Ward adds an extra classical-MDS embedding step on top of the hierarchical run.
+
+**Recommendations:**
+- N < 500: Any method is fast enough
+- N 500-2000: Avoid flexible, use PAM sparingly
+- N > 2000: Hierarchical methods only, or subsample for PAM
+
+## Interpretation Guidelines
+
+**How to choose:**
+
+1. **Start with wcCmpCluster(method="all")** to get overview
+2. **Check ASW values**: Methods with ASW > 0.5 are good candidates
+3. **Examine consistency**: Does method perform well across K values?
+4. **Consider interpretability**: Hierarchical methods provide dendrograms
+5. **Validate with bootstrap**: Use `bootclustrange()` on top methods
+
+**Red flags:**
+- ASW < 0.25 for all methods → Data may not cluster well
+- Huge differences between methods → Data structure ambiguous
+- Single linkage best → Check for noise/outliers causing chaining
+
+# Advanced Topics
+
+## Combining with Bootstrap Validation
+
+After identifying promising methods, validate with bootstrap:
+
+```{python}
+# docs-audit: sequential id=cmp-bootstrap-smoke
+from weightedcluster import bootclustrange
+
+avg_clustrange = {
+    'kvals': career_result['average']['kvals'],
+    'clustering': career_result['average']['clustering'],
+    'stats': career_result['average']['stats']
+}
+boot_avg = bootclustrange(
+    avg_clustrange,
+    career_seqs,
+    seqdist_args={"method": "OM", "indel": 1.0, "sm": 2},
+    R=3,
+    sample_size=50,
+    sampling="random",
+    random_state=42,
+)
+print("Bounded comparison bootstrap complete")
+```
+
+The publication-style `R=100` version is an extended Quarto workload:
+
+```{python}
+# docs-audit: expensive pair=cmp-bootstrap-smoke
+from weightedcluster import bootclustrange, wcKMedRange
+
+# Say "average" linkage performed best
+# Convert to clustrange format and bootstrap
+avg_clustrange = {
+    'kvals': career_result['average']['kvals'],
+    'clustering': career_result['average']['clustering'],
+    'stats': career_result['average']['stats']
+}
+
+# Bootstrap validation
+boot_avg = bootclustrange(
+    avg_clustrange,
+    career_seqs,
+    seqdist_args={"method": "OM", "indel": 1.0, "sm": 2},
+    R=100,
+    sample_size=80,
+    sampling="random",
+    random_state=42
+)
+
+print("Bootstrap validation complete for average linkage")
+```
+
+## Custom Quality Metrics
+
+Focus on specific metrics relevant to your domain:
+
+```{python}
+# docs-audit: sequential
+# Domain-specific metric selection
+# For well-separated clusters: prioritize ASW, PBC
+# For hierarchical structure: prioritize CH, HC
+# For balanced sizes: check cluster size distributions
+
+def evaluate_method(result, method, k, metrics=['ASW', 'CH', 'PBC']):
+    """Evaluate a method at specific K using multiple metrics."""
+    if method not in result:
+        return None
+
+    k_idx = result[method]['kvals'].index(k)
+    scores = {}
+    for metric in metrics:
+        if metric in result[method]['stats']:
+            scores[metric] = result[method]['stats'][metric][k_idx]
+    return scores
+
+# Evaluate all methods at K=3
+k = 3
+print(f"\\nMulti-metric evaluation at K={k}:")
+for method in ["pam", "average", "complete"]:
+    scores = evaluate_method(career_result, method, k)
+    if scores:
+        print(f"{method:<12}: {scores}")
+```
+
+# Summary
+
+## Key Takeaways
+
+1. **wcCmpCluster** automates comparison of multiple clustering methods
+2. **Available methods:**
+   - Hierarchical: average, complete, single, ward, diana, flexible
+   - Partitioning: PAM (k-medoids)
+3. **Ward linkage** runs exact `ward.D2` on distance matrices by default; `embed_then_ward=True` is optional approximation mode
+4. **Method selection** should consider:
+   - Quality metrics (ASW, CH, PBC)
+   - Stability across K values
+   - Computational cost
+   - Interpretability needs
+5. **Visualization** via `plot_clustrangefamily` aids comparison
+6. **Validation** with bootstrap confirms method reliability
+
+## Decision Framework
+
+Follow this workflow:
+
+1. **Run wcCmpCluster** with `method="all"`
+2. **Identify top 2-3 methods** based on ASW/CH at target K
+3. **Visualize** performance across K values
+4. **Consider interpretability**: Hierarchical vs partitioning
+5. **Validate** top method(s) with bootstrap
+6. **Document** justification: "Method X chosen because ASW=Y, stable across K"
+
+## Next Steps
+
+- Apply wcCmpCluster to your sequence data
+- Compare hierarchical and partitioning approaches
+- Validate chosen method with `bootclustrange`
+- Explore property-based clustering with `seqpropclust`
+
+## Further Reading
+
+- `bootclustrange_tutorial.qmd` - Bootstrap validation
+- `../WORKFLOW_GUIDE.md` - Complete analysis pipeline
+- `../API_INDEX.md` - Full function reference
+- R WeightedCluster documentation for comparison
+
+**Remember:** No single method is universally best. wcCmpCluster helps you make an informed, data-driven choice.

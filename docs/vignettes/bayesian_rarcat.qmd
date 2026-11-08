@@ -1,0 +1,268 @@
+---
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    code-link: true
+execute:
+  enabled: true
+  warning: false
+---
+
+# Bayesian RARCAT: typology uncertainty and categorical associations
+
+`weightedcluster.bayes_rarcat` is a modular Bayesian analysis for asking how
+covariate associations change when a sequence typology is uncertain. It is not
+a compatibility port of R `WeightedCluster::rarcat`. The two are different
+estimators: R fits independent one-vs-rest GLMs and a crossed pooling stage,
+whereas Python combines predictor-independent Bayesian-bootstrap partitions
+with conditional categorical-softmax posteriors.
+
+## Installation
+
+Install the unchanged local traminex sibling first, then the Bayesian extra:
+The published requirement spelling for an installed distribution is
+`pyweightedcluster[bayesian]`; the local editable equivalent is shown below.
+
+```bash
+# docs-audit: shell-setup reason="local sibling then bounded Bayesian extra"
+~/miniforge3/envs/datasci/bin/python -m venv --system-site-packages .venv
+PY=.venv/bin/python
+$PY -m pip install --no-deps --no-build-isolation -e ../PROJECT_TRAMINEX
+$PY -m pip install -e ".[bayesian]"
+```
+
+The runtime extra contains bounded PyMC, ArviZ, xarray, h5netcdf, and h5py
+requirements. h5netcdf plus h5py supply the private bundle's required NetCDF
+backend; Bambi and formulae are development cross-checks, not production backends.
+
+## Exact public contract
+
+```python
+# docs-audit: display-only reason="exact public signature"
+def bayes_rarcat(
+    dissimilarity,
+    *,
+    formula: str,
+    data,
+    B: int,
+    npass: int,
+    partition_root_seed: int,
+    conditional_root_seed: int,
+    continuous_predictors,
+    counterfactual_steps,
+    user_prior=None,
+    parallel: bool = False,
+    n_jobs: int | None = None,
+) -> BayesRARCATResult:
+    ...
+```
+
+The caller must state `B`, `npass`, both root seeds, the continuous-predictor
+classification, and counterfactual steps. The formula response must be one
+untransformed column in `data`. It must be a complete ordered categorical, and
+its declared categories must equal stable first-observed label order. Exact
+observation identity and order come from `data.index`; duplicated, reordered,
+or distance-misaligned identities are rejected. Referenced response and
+predictor values must be complete. An unrelated unused column may contain
+missing values.
+
+`continuous_predictors` names every raw continuous predictor. Use `()` when
+there are none. `counterfactual_steps` supplies any explicit original-scale
+finite-difference step required by the restricted effect contract; use `{}`
+when the validated default construction is sufficient. The partition and
+conditional root seeds are separate replay domains. `parallel` and `n_jobs`
+affect only deterministic B4 post-processing—never B2 partition replay or B3
+sampling.
+
+## Bounded setup and full fit
+
+The setup below is the bounded public smoke fixture. It has `n=8`, two ordered
+clusters, design width 2, and `B=8`.
+
+```{python}
+# docs-audit: smoke id=bayesian-rarcat-setup
+import numpy as np
+import pandas as pd
+from weightedcluster import BayesRARCATResult, bayes_rarcat
+
+positions = np.asarray([-4.2, -4.0, -3.8, -3.6, 3.6, 3.8, 4.0, 4.2])
+dissimilarity = np.abs(positions[:, None] - positions[None, :])
+case_ids = [f"public-single-{index:02d}" for index in range(8)]
+data = pd.DataFrame(
+    {
+        "cluster": pd.Categorical(
+            ["north"] * 4 + ["south"] * 4,
+            categories=["north", "south"],
+            ordered=True,
+        ),
+        "x": [-2.1, -1.4, -0.8, -0.3, 0.3, 0.8, 1.4, 2.1],
+    },
+    index=pd.Index(case_ids, name="case_id"),
+)
+
+assert dissimilarity.shape == (8, 8)
+assert data["cluster"].cat.ordered
+```
+
+The actual call uses the fixed production sampler—four serial chains, 500
+tuning draws and 500 retained draws per chain, `cores=1`, `blas_cores=1`, and
+`target_accept=0.90`. It is therefore explicitly expensive even for this small
+fixture.
+
+```{python}
+# docs-audit: expensive pair=bayesian-rarcat-setup
+result = bayes_rarcat(
+    dissimilarity,
+    formula="cluster ~ 1 + x",
+    data=data,
+    B=8,
+    npass=5,
+    partition_root_seed=510201,
+    conditional_root_seed=510202,
+    continuous_predictors=("x",),
+    counterfactual_steps={},
+)
+assert isinstance(result, BayesRARCATResult)
+```
+
+The production policy is no retry: every distinct empirical partition is fit
+once. A failed component remains at its original index and mass, makes
+`result.status == "blocked"`, and prevents a passing integrated result.
+
+## Reading the result
+
+The result is a frozen typed object, not an R-like dictionary. Its NumPy arrays
+are read-only. Public inspection does not require private semantic-frame
+helpers:
+
+```python
+# docs-audit: display-only reason="result inspection after expensive fit"
+result.status
+result.failures
+result.warnings
+result.n, result.B, result.K, result.U
+result.cluster_order
+result.masses
+result.coefficient_summaries
+result.effect_summaries
+result.allocation
+result.partition_posterior.membership_probabilities
+result.partition_posterior.co_clustering
+result.conditional_posterior.components
+```
+
+`result.masses` are exact empirical partition masses (`counts / B`). Each
+integrated target retains its weighted support, a 94% inverse-CDF interval,
+sign probabilities, and a law-of-total-variance decomposition into
+within-component, between-component, and total variance. These are posterior
+probabilities and posterior SDs. They are not p-values and not standard errors. No public
+Bayesian plotting API is claimed.
+
+The result retains prior-, sampler-, and posterior-predictive diagnostics.
+Material gates require finite scientific values, rank-normalized R-hat below
+1.01, bulk and tail ESS of at least 400, zero divergences, BFMI of at least
+0.30 in every chain, bounded first-half/full-draw change and MCSE, and bounded
+posterior-predictive error. Warnings are retained and classified causally;
+optional sampler metadata alone is not a scientific failure.
+
+## Scientific interpretation and limits
+
+This is a modular/cut posterior. B2 learns partitions from the supplied
+dissimilarities and reference labels without predictors; B3 conditions on
+each distinct aligned partition; B4 mixes the retained scalar draws with the
+unchanged empirical partition masses. It is not one conventional joint
+generative posterior.
+
+Alignment has reference-choice sensitivity: changing the fixed reference can
+change label-oriented component identity even when raw partitions and their
+label-invariant co-clustering are unchanged. The fixed `K` is determined by
+the ordered response categories.
+
+**Enforced bounds.** The following are checked before sampling and reject the
+input: `n<=12`, `K<=3`, design width `<=4`, `B<=128`, `U<=16`, and `U/B<=0.25`.
+A failed conditional component makes `result.status == "blocked"` and prevents
+a passing integrated result.
+
+**A measurement, not a bound.** Every result also records
+`projected_serial_time_u16_seconds`, sixteen times the mean component time.
+The B1 feasibility spike measured 132.0 seconds for a serial `U=16` fit
+against a declared stop-go threshold of 900 seconds for later phases. That
+threshold is a **planning figure, not an enforced bound**: nothing in the
+package checks it at runtime, and a configuration projected to exceed it is
+not refused — it simply takes as long as it takes. Refusing a slow but valid
+fit would be worse than reporting the projection, so the quantity is
+deliberately left ungated. Plan around it rather than relying on a rejection.
+
+### What the calibration evidence does and does not cover
+
+Two limits of the recorded evidence matter for how a reported interval should
+be read. The calibration mismatch was established by the read-only audit of
+2026-08-25; the outcome-selection defect was established by the whole-codebase
+audit of 2026-08-27. They are recorded here because a practitioner would not
+otherwise see them.
+
+**The calibration was run outside the enforced envelope.** The frozen prior,
+the sampler profile, and the diagnostic thresholds were calibrated in the B1
+study at sample sizes of `n = 36` and above, seven of the eight scenarios at
+`n >= 120`. The enforced envelope is `n <= 12`, and the function rejects
+`n = 13`. **There is therefore no valid calibration evidence at any sample size the
+public API will accept.** The `n <= 12` bound itself comes from a runtime
+feasibility measurement in the B1 mixture spike, not from a statistical
+calibration.
+
+**The preserved small-n study is invalid for its stated operating-characteristic
+claims.** It repeatedly redrew categorical outcomes until all categories
+appeared in a required first-observed order, then compared the accepted data
+with an unconditional truth. Its recorded values — AME coverage **0.65** for
+the two signal clusters, coefficient coverage **0.95**, point-summary
+differences of roughly 27% and 44%, and same-direction signal results — remain
+historical observations of the accepted datasets. They do not estimate
+unconditional recovery or coverage and cannot support magnitude, lower-bound,
+sign, or direction guidance. The complete classification and preserved claim
+map are in
+[`BAYESIAN_RARCAT_SMALL_N_EVIDENCE_CORRECTION_2026_08_27.md`](../maintainers/BAYESIAN_RARCAT_SMALL_N_EVIDENCE_CORRECTION_2026_08_27.md).
+
+**What this means for interpretation.** The function enforces the documented
+runtime-feasibility envelope, but no valid calibration evidence exists inside
+that envelope. Do not treat reported intervals, sign probabilities, directions,
+or magnitudes as calibrated small-sample operating characteristics. Supplying a
+defensible `user_prior` is supported functionality, but it does not repair the
+invalid study or supply missing calibration evidence.
+
+The audit checked the estimand, algebraic identities, and variance decomposition
+separately to machine precision; this simulation-design defect does not
+invalidate that algebra. Stronger small-n claims require a future prospectively
+preregistered, outcome-independent study (or a prospectively defined conditional
+estimand) under separate execution authority. No such study is authorized here.
+
+### Typology uncertainty can be absent, and the result now says so
+
+RARCAT exists to show how covariate conclusions change when the typology is
+uncertain, and that uncertainty is carried entirely by the between-component
+variance term. When the partition posterior compresses to a single distinct
+partition, that term is exactly zero for every target and the reported interval
+is a conditional-regression interval on one typology.
+
+**The bounded example above is exactly that case.** It gives `U = 1`, so its
+between-component variance is `0.0` for every reported target and the reported
+intervals propagate no typology uncertainty at all. It is kept because it is
+the cheapest complete illustration of the public contract, not because it
+illustrates typology uncertainty. `result.warnings` now carries an explicit
+message whenever the posterior degenerates to one partition, and a second
+message when one partition holds at least 95% of the mass, in which case the
+between-component term is present but negligible. Check `result.U` and
+`result.warnings` before reading an interval as reflecting typology
+uncertainty.
+
+There is no public compatibility `rarcat`, no user weights, no missing-data
+imputation, no uncertainty over `K`, and no alternative clustering engine.
+There are no public sampler knobs, automatic cluster selection, or R result
+fields. R RARCAT analyses and Python Bayesian RARCAT results should be reported
+as different estimators, not as numeric parity results.
+
+The internal schema-v1 bundle remains private. Its SHA-256 inventory detects
+corruption but does not authenticate untrusted input, and its writer/reader are
+not public API. The B5 evidence is local CPython 3.12 Linux x86_64 evidence. It
+is not hosted-wheel validation and is not package-index publication evidence.

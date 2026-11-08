@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "domain": "formula",
+  "split": "validation",
+  "frozen_before_product_change": true,
+  "corpus_id": "sha256:9f4ae880d87673a901ecd77f41fb6c28f8905a40a499f0486dceb4be3a9ae98c",
+  "generator": {
+    "name": "structured-formula-level-matrix",
+    "version": 1,
+    "seed": 2026072902,
+    "n_rows": 90,
+    "modes": [
+      "interaction_no_intercept",
+      "main_intercept",
+      "interaction_intercept",
+      "main_no_intercept"
+    ],
+    "predictor_kinds": [
+      "numeric",
+      "logical",
+      "declared_categorical",
+      "raw_character"
+    ],
+    "source_identifiers": [
+      "cluster",
+      "group",
+      "x",
+      "flag",
+      "raw_char"
+    ]
+  },
+  "level_classes": {
+    "closing_bracket": "validation]close",
+    "opening_bracket": "validation[open",
+    "colon": "validation:colon",
+    "patsy_token": "validation[T.token",
+    "dot": "validation.dot",
+    "space": "validation space",
+    "ascii_punctuation": "validation!punct",
+    "unicode_composed": "résumé",
+    "unicode_decomposed": "résumé",
+    "mixed_scripts": "deltaЖ字"
+  },
+  "auxiliary_cases": {
+    "raw_character_interaction_no_intercept": "cluster ~ 0 + raw_char + x + raw_char:x",
+    "logical_main_intercept": "cluster ~ flag + x",
+    "raw_character_main_no_intercept": "cluster ~ 0 + raw_char + x",
+    "logical_interaction_intercept": "cluster ~ flag + x + flag:x",
+    "raw_character_main_intercept": "cluster ~ raw_char + x",
+    "logical_main_no_intercept": "cluster ~ 0 + flag + x",
+    "raw_character_interaction_intercept": "cluster ~ raw_char + x + raw_char:x",
+    "logical_interaction_no_intercept": "cluster ~ 0 + flag + x + flag:x"
+  },
+  "expected_case_count": 48,
+  "rejected_candidates": [],
+  "independent_holdout": {
+    "reserved": true,
+    "seed_must_not_equal": 2026072902
+  }
+}

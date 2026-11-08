@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "domain": "formula",
+  "split": "development",
+  "frozen_before_product_change": true,
+  "corpus_id": "sha256:316a29babc2f2ed1f84b2c6602c5c5cdb754fb2ef190d26c45cd0db12c329c93",
+  "generator": {
+    "name": "structured-formula-level-matrix",
+    "version": 1,
+    "seed": 2026072901,
+    "n_rows": 90,
+    "modes": [
+      "main_intercept",
+      "main_no_intercept",
+      "interaction_intercept",
+      "interaction_no_intercept"
+    ],
+    "predictor_kinds": [
+      "numeric",
+      "logical",
+      "declared_categorical",
+      "raw_character"
+    ],
+    "source_identifiers": [
+      "cluster",
+      "group",
+      "x",
+      "flag",
+      "raw_char"
+    ]
+  },
+  "level_classes": {
+    "closing_bracket": "level]close",
+    "opening_bracket": "level[open",
+    "colon": "level:colon",
+    "patsy_token": "level[T.token",
+    "dot": "level.dot",
+    "space": "level space",
+    "ascii_punctuation": "level!punct",
+    "unicode_composed": "café",
+    "unicode_decomposed": "café",
+    "mixed_scripts": "alphaβ漢"
+  },
+  "auxiliary_cases": {
+    "logical_main_intercept": "cluster ~ flag + x",
+    "logical_main_no_intercept": "cluster ~ 0 + flag + x",
+    "logical_interaction_intercept": "cluster ~ flag + x + flag:x",
+    "logical_interaction_no_intercept": "cluster ~ 0 + flag + x + flag:x",
+    "raw_character_main_intercept": "cluster ~ raw_char + x",
+    "raw_character_main_no_intercept": "cluster ~ 0 + raw_char + x",
+    "raw_character_interaction_intercept": "cluster ~ raw_char + x + raw_char:x",
+    "raw_character_interaction_no_intercept": "cluster ~ 0 + raw_char + x + raw_char:x"
+  },
+  "expected_case_count": 48,
+  "rejected_candidates": [],
+  "independent_holdout": {
+    "reserved": true,
+    "seed_must_not_equal": 2026072901
+  }
+}

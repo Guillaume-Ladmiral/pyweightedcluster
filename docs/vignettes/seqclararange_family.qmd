@@ -1,0 +1,74 @@
+---
+title: "SeqClara: multiple criteria (family)"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Overview
+
+This vignette demonstrates assembling a "family" of seqclararange results when multiple selection criteria are requested, mirroring the R interface.
+
+```{python}
+# docs-audit: sequential id=seqclararange-family-smoke
+import numpy as np
+from weightedcluster import seqclararange_family, plot_clustrangefamily
+
+# Tiny example sequences
+X = np.array([
+    [0, 0, 0, 0],
+    [0, 0, 0, 1],
+    [1, 1, 1, 1],
+    [1, 1, 1, 0],
+], dtype=int)
+
+fam = seqclararange_family(
+    X,
+    R=10,
+    sample_size=4,
+    kvals=[2, 3],
+    seqdist_args={"method": "HAM"},
+    method="crisp",
+    criteria=["distance", "db", "ams"],
+    random_state=42,
+)
+list(fam.keys())
+```
+
+## Panel plots
+
+```{python}
+# docs-audit: sequential
+from weightedcluster import plot_clustrangefamily
+fig, axes = plot_clustrangefamily(
+    fam,
+    group="stat",
+    stat=["Avg dist", "DB", "AMS"],
+    norm="range",
+)
+fig
+```
+
+```{python}
+# docs-audit: sequential
+# Or panel by method (here criterion plays the role of "method")
+fig2, axes2 = plot_clustrangefamily(
+    fam,
+    group="method",
+    method="all",
+    stat=["Avg dist", "DB", "AMS"],
+    norm="none",
+)
+fig2
+```

@@ -1,0 +1,52 @@
+---
+title: "K-Medoids (wcKMedoids)"
+format:
+  html:
+    embed-resources: true
+    number-sections: true
+    toc: true
+    toc-expand: 4
+    toc-title: Contents
+    code-link: true
+    code-fold: false
+    code-tools: true
+execute:
+  enabled: true
+  warning: false
+ipynb-shell-interactivity: all
+---
+
+# Overview
+
+This vignette demonstrates wcKMedoids and wcKMedRange with full cluster quality statistics.
+
+```{python}
+# docs-audit: sequential id=kmedoids-smoke
+import numpy as np
+from weightedcluster import print_kmedoids, wcKMedoids, wcKMedRange
+
+# Toy distance matrix
+rng = np.random.default_rng(0)
+X = rng.normal(size=(40, 4))
+D = np.sqrt(((X[:, None, :] - X[None, :, :]) ** 2).sum(axis=2))
+
+res = wcKMedoids(D, 3)
+res
+print(print_kmedoids(res, digits=4))
+```
+
+The returned object includes scalar cluster-quality statistics in `res["stats"]`
+and exact R-style `info` names. `res["clustering"]` contains the one-based
+observation position of each row's medoid, not a compact `1..k` label.
+Per-cluster silhouette summaries are split into:
+
+- `res["ASW"]`: unweighted per-cluster silhouette means
+- `res["ASWw"]`: weighted per-cluster silhouette means
+
+# Range of K
+
+```{python}
+# docs-audit: sequential
+kr = wcKMedRange(D, [2,3,4,5])
+kr["stats"]
+```

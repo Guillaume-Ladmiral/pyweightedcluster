@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "domain": "labels",
+  "split": "development",
+  "frozen_before_product_change": true,
+  "corpus_id": "sha256:17dfccb270da74821aad435970b5671155e9fe0768f14dcdf4425c7e5771d8d6",
+  "generator": {
+    "name": "pcg64-finite-bit-patterns",
+    "version": 1,
+    "bit_generator": "PCG64",
+    "seed": 2026072903,
+    "random_finite_count": 65536
+  },
+  "special_values": [
+    0.0,
+    -0.0,
+    5e-324,
+    -5e-324,
+    9007199254740991.0,
+    9007199254740992.0,
+    7231257027857118.0,
+    1e-05,
+    1e+15,
+    1.7976931348623157e+308,
+    -1.7976931348623157e+308
+  ],
+  "special_classes": [
+    "signed_zero",
+    "subnormal",
+    "exact_integer_boundary",
+    "confirmed_counterexample",
+    "decimal_scientific_transition",
+    "largest_finite",
+    "both_signs"
+  ],
+  "nonfinite_roles_characterized_separately": [
+    "Inf",
+    "-Inf",
+    "NaN",
+    "missing"
+  ],
+  "rejected_candidates": [
+    "0x7ff2af6e47991e05",
+    "0x7ff5a047b476ddec",
+    "0xfffd6e55b305091b",
+    "0x7ff20181808be3e0",
+    "0x7ff0c40830e8d883",
+    "0x7ff50e86701094a3",
+    "0x7ffa140195b9bb8b",
+    "0x7ffc5db2357254a8",
+    "0xfff79b820bd0560e",
+    "0xfffd807ffd3fddab",
+    "0xfff6596f3e24b32d",
+    "0x7ff7018ef9f7e021",
+    "0x7ff09643d0c5cf41",
+    "0x7ff1e54d7fa34893",
+    "0x7ff47ca7b11e0990",
+    "0x7ff32848fd027026",
+    "0xfff2f10571f5effd",
+    "0xfffe889831a6c3a4",
+    "0x7ffb7d823f26e175",
+    "0x7ff36eac4d7a7420"
+  ],
+  "materialized_bits_id": "sha256:25a69a5af08ba509d2df988862dc4cd8fb86c7559056148d9a52626538e4032e",
+  "independent_holdout": {
+    "reserved": true,
+    "generator_seed_must_be_fresh": true
+  }
+}
