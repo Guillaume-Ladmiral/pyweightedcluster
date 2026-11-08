@@ -13,7 +13,7 @@ Python port of key APIs from the R package `WeightedCluster` (Studer), with R-or
 > convergence plan. Any AI assistant should read [AGENTS.md](AGENTS.md) first.
 
 Release status:
-- Current release: `0.1.0` — see [CHANGELOG.md](CHANGELOG.md) for the full version history
+- Current release: `0.1.1` — see [CHANGELOG.md](CHANGELOG.md) for the full version history
 - The version is single-sourced from `pyproject.toml`; `weightedcluster.__version__` reads it
 - Version strings like `0.2.x`, `0.3.x`, `0.4.x` in archived reports are disowned draft artifacts
 
@@ -192,6 +192,30 @@ stable error instead of erasing a positive row.
 Distribution and other non-index plot types continue through public traminex
 rendering.
 
+## Install a release
+
+pyweightedcluster is not on PyPI, and neither is traminex, which it needs.
+Releases are published on GitHub with their packages and a `SHA256SUMS` file:
+[pyweightedcluster](https://github.com/Guillaume-Ladmiral/pyweightedcluster/releases)
+and [traminex](https://github.com/Guillaume-Ladmiral/traminex/releases). The
+compiled wheel is built for Linux x86-64 and CPython 3.12. Install both packages
+in one command, so that pip takes traminex from its release and never looks for
+that name on PyPI; pip takes the other dependencies from PyPI:
+
+```bash
+# docs-audit: shell-setup reason="install the published release wheels"
+python -m pip install \
+  https://github.com/Guillaume-Ladmiral/traminex/releases/download/v0.2.3/traminex-0.2.3-py3-none-any.whl \
+  https://github.com/Guillaume-Ladmiral/pyweightedcluster/releases/download/v0.1.1/pyweightedcluster-0.1.1-cp312-cp312-linux_x86_64.whl
+```
+
+This release works with traminex 0.2.3: importing `weightedcluster` checks that
+the installed traminex Python files are exactly those of that release, and stops
+otherwise (see the next section). On another platform or Python version, install
+the source package `pyweightedcluster-0.1.1.tar.gz` from the same release instead
+of the wheel; pip then compiles the C++ extension, which needs a C++ compiler.
+The ICU library that traminex requires is described in traminex's README.
+
 ## Installation
 
 Ubuntu 24.04 is the canonical development platform. The package requires Python 3.11 or newer.
@@ -210,8 +234,8 @@ The metadata requirement `traminex>=0.2.0` is a necessary version floor but is
 insufficient to identify the delegated behavior: traminex source has changed
 while its version remained constant. Every `weightedcluster` import first verifies
 the installed provider against the packaged 83-file Python-source commitment
-for reviewed revision `2ed89d77a75d67a4ac319c05da463a1758244503`, traminex 0.2.2 (re-pinned
-2026-11-07 from `6e76440b…` and on 2026-11-08 to 0.2.1, then 0.2.2, through the reviewed procedure). Missing,
+for reviewed revision `2cbb3472736d0ccce32a291241983a12b8921122`, traminex 0.2.3 (re-pinned
+2026-11-07 from `6e76440b…` and on 2026-11-08 to 0.2.1, 0.2.2, then 0.2.3, through the reviewed procedure). Missing,
 extra, changed, or symlinked Python sources fail closed before delegated symbols
 load. Maintainers must use the reviewed manifest update procedure in
 `docs/maintainers/README.md` when approving a new sibling revision.

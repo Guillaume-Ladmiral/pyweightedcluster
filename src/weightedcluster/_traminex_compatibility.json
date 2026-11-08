@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256(sorted(relative-posix-path + NUL + bytes + NUL))",
   "distribution": "traminex",
-  "distribution_version": "0.2.2",
+  "distribution_version": "0.2.3",
   "python_file_count": 83,
   "python_files": [
     "__init__.py",
@@ -89,6 +89,6 @@
     "visualization/utils.py"
   ],
   "schema_version": 1,
-  "source_revision": "2ed89d77a75d67a4ac319c05da463a1758244503",
-  "source_tree_sha256": "e2ccb374b64010843e58b334299f9902edada5e5056128567afa728bbe39aabb"
+  "source_revision": "2cbb3472736d0ccce32a291241983a12b8921122",
+  "source_tree_sha256": "4a0a7a647903bc6d61bedc824ec35b2e1c4fb74a67e04c5fdd7f9085d2f3d99b"
 }

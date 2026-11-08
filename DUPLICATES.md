@@ -37,6 +37,19 @@ recommendation. Possible recommendations:
 > See the full step-by-step `MIGRATION_PLAN.md` for the historical execution
 > record.
 
+## 2026-11-08 reviewed manifest update to traminex 0.2.3
+
+The commitment moved from sibling revision `2ed89d77a75d67a4ac319c05da463a1758244503` (0.2.2) to
+`2cbb3472736d0ccce32a291241983a12b8921122`, traminex's patch release 0.2.3. Three of the 83 committed files changed
+(`distances/__init__.py`, `format.py`, `seqformat.py`); the path list is unchanged and the aggregate SHA-256 is now
+`4a0a7a647903bc6d61bedc824ec35b2e1c4fb74a67e04c5fdd7f9085d2f3d99b`, recomputed by the procedure in
+`docs/maintainers/README.md`. The delta was reviewed and measured against both revisions: two of its changes reach this
+package, through the `seqdef` and `seqformat` calls of `seqclustname`. Complex-valued states are written as R's
+`as.character` writes them (`1+1i`, formerly `(1+1j)`), and rows given as matrices of unequal widths are refused
+(formerly their printed forms became states); `tests/test_traminex_0_2_3_consumer_contracts.py` pins both. The
+third change, `seqdist` with TRATE costs whose largest cost is 0 and refseq index sets, is not reached: no module
+under `src/` passes `refseq`.
+
 ## 2026-11-08 reviewed manifest update to traminex 0.2.2 (version only)
 
 The commitment moved from sibling revision `7bebb7a4026f7f8037e1e196d005f4cb5ffa03a4` (0.2.1) to
@@ -108,10 +121,10 @@ The bare version floor is insufficient to identify delegated behavior:
 source while retaining version 0.0.8. pyweightedcluster now checks a
 symlink-free Python source inventory for the reviewed traminex revision
 recorded in `src/weightedcluster/_traminex_compatibility.json` — since the
-2026-11-08 updates above, an 83-file inventory of `2ed89d77a75d67a4ac319c05da463a1758244503`
+2026-11-08 updates above, an 83-file inventory of `2cbb3472736d0ccce32a291241983a12b8921122`
 with aggregate SHA-256
-`e2ccb374b64010843e58b334299f9902edada5e5056128567afa728bbe39aabb`
-(from 2026-09-06, `6e76440b8ed7fc4a1c885c78546425a877bac275`, aggregate SHA-256
+`4a0a7a647903bc6d61bedc824ec35b2e1c4fb74a67e04c5fdd7f9085d2f3d99b`
+(from 2026-11-07 until the 0.2.3 update, `e2ccb374b64010843e58b334299f9902edada5e5056128567afa728bbe39aabb`; from 2026-09-06, `6e76440b8ed7fc4a1c885c78546425a877bac275`, aggregate SHA-256
 `d6eafe7300d36493d0f814692fe25e51fd5170036eea827305200e12832e5443`; originally `1ebb46cd94321feb5bed59c50a864f405a2f4c59`, aggregate SHA-256
 `f2e0e09e3ecf658089639e361c4a0e50d422e921b929919e2f46cfb414e95ea3`).
 The packaged manifest and verifier reject missing, extra, changed, or symlinked

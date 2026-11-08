@@ -264,6 +264,6 @@ def test_all_active_documentation_blocks_execute_or_receive_class_specific_valid
     assert summary.executed_count == 55
     assert summary.expensive_count == 10
     assert summary.display_only_count == 7
-    assert summary.shell_setup_count == 5
-    assert summary.validated_count == 77
+    assert summary.shell_setup_count == 6
+    assert summary.validated_count == 78
     assert summary.documents == tuple(EXECUTABLE_USER_DOC_FILES)

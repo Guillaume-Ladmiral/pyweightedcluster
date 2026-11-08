@@ -7,6 +7,24 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-08
+
+A patch release, by the maintainer's decision of 2026-11-08. It requires traminex 0.2.3, which the import-time
+commitment checks.
+
+### Added
+- **README: an "Install a release" section**, for visitors: one command that installs the traminex and
+  pyweightedcluster release wheels from GitHub together, so that pip never looks for traminex on PyPI; the
+  source package for other platforms.
+- **Consumer regressions for traminex 0.2.3** (`tests/test_traminex_0_2_3_consumer_contracts.py`): the two
+  changes of the delta that reach `seqclustname`, below.
+
+### Changed
+- **Re-pinned to traminex 0.2.3** (`2cbb3472736d0ccce32a291241983a12b8921122`, 2026-11-08). Three of the 83 committed
+  files changed, so the digest is now `4a0a7a647903bc6d…`. Through `seqclustname`: complex-valued states are
+  labelled as R's `as.character` writes them (`1+1i`, formerly `(1+1j)`), and rows given as matrices of unequal
+  widths are refused. `DUPLICATES.md` records the review.
+
 ## [0.1.0] - 2026-11-08
 
 The first published release, by the maintainer's decision of 2026-11-08 (0.0.3 was never released; the

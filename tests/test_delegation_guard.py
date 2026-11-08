@@ -195,7 +195,7 @@ def test_traminex_provider_version_and_editable_source_are_exact() -> None:
     direct_url = json.loads(distribution.read_text("direct_url.json") or "{}")
     source = Path(inspect.getsourcefile(traminex.seqdist) or "").resolve()
 
-    assert metadata.version("traminex") == "0.2.2"
+    assert metadata.version("traminex") == "0.2.3"
     assert distribution.metadata["Name"] == "traminex"
     assert traminex.seqdist.__module__ == "traminex.distances"
     if direct_url.get("dir_info", {}).get("editable") is True:

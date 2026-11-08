@@ -427,10 +427,10 @@ def test_clean_runner_rejects_changed_source_before_importing_delegated_symbols(
         "raise AssertionError('delegated traminex symbols imported before verification')\n",
         encoding="utf-8",
     )
-    dist_info = tmp_path / "traminex-0.2.2.dist-info"
+    dist_info = tmp_path / "traminex-0.2.3.dist-info"
     dist_info.mkdir()
     (dist_info / "METADATA").write_text(
-        "Metadata-Version: 2.1\nName: traminex\nVersion: 0.2.2\n",
+        "Metadata-Version: 2.1\nName: traminex\nVersion: 0.2.3\n",
         encoding="utf-8",
     )
     script = (
@@ -463,10 +463,10 @@ def test_clean_runner_rejects_changed_source_before_importing_delegated_symbols(
 def test_clean_runner_accepts_matching_temporary_sibling_copy(tmp_path: Path) -> None:
     copied_root = tmp_path / "traminex"
     shutil.copytree(TRAMINEX_ROOT, copied_root)
-    dist_info = tmp_path / "traminex-0.2.2.dist-info"
+    dist_info = tmp_path / "traminex-0.2.3.dist-info"
     dist_info.mkdir()
     (dist_info / "METADATA").write_text(
-        "Metadata-Version: 2.1\nName: traminex\nVersion: 0.2.2\n",
+        "Metadata-Version: 2.1\nName: traminex\nVersion: 0.2.3\n",
         encoding="utf-8",
     )
     script = (

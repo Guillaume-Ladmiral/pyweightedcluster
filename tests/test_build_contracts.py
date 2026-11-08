@@ -43,12 +43,12 @@ def test_traminex_content_commitment_is_packaged_and_complete():
     assert manifest["schema_version"] == 1
     assert manifest["algorithm"] == "sha256(sorted(relative-posix-path + NUL + bytes + NUL))"
     assert manifest["distribution"] == "traminex"
-    assert manifest["distribution_version"] == "0.2.2"
-    assert manifest["source_revision"] == "2ed89d77a75d67a4ac319c05da463a1758244503"
+    assert manifest["distribution_version"] == "0.2.3"
+    assert manifest["source_revision"] == "2cbb3472736d0ccce32a291241983a12b8921122"
     assert manifest["python_file_count"] == len(manifest["python_files"]) == 83
     assert manifest["python_files"] == sorted(manifest["python_files"])
     assert manifest["source_tree_sha256"] == (
-        "e2ccb374b64010843e58b334299f9902edada5e5056128567afa728bbe39aabb"
+        "4a0a7a647903bc6d61bedc824ec35b2e1c4fb74a67e04c5fdd7f9085d2f3d99b"
     )
 
     pyproject_text = _read(REPO_ROOT / "pyproject.toml")
